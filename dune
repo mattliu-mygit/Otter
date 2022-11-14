@@ -1,0 +1,9 @@
+(rule
+  (target otter.zip)
+  (deps 
+    src/dune
+    tests/tests.ml
+    tests/dune
+  )
+  (action
+    (run zip -R otter.zip %{deps})))
