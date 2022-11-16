@@ -1,0 +1,14 @@
+(library
+ (name otter_lib)
+ (modules otter_lib infraction block)
+ (libraries core yojson)
+ (preprocess
+  (pps bisect_ppx ppx_deriving_yojson))
+ (modules_without_implementation block infraction otter_lib))
+
+(executable
+ (name Otter)
+ (modules otter)
+ (libraries otter_lib core core_unix.command_unix yojson)
+ (preprocess
+  (pps ppx_let ppx_deriving_yojson)))
