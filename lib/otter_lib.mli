@@ -1,8 +1,8 @@
 open Block
 
-(* 
-   To normalize files, we will sanitize them by converting 
-   the list of strings representing a file into a list of Blocks.
+(*
+ To normalize files, we will sanitize them by converting 
+ the list of strings representing a file into a list of Blocks.
 *)
 val sanitize: string list -> block list
 
@@ -17,6 +17,7 @@ val check_variable_names: block list -> block list
 
 val check_function_length: block list -> block list
 
+(* Type of modification to check for. *)
 type modification_type = Indent | Parameter_count | Duplicate | Variable_names | Function_length
 
 (* 
