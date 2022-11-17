@@ -12,7 +12,7 @@ type params = (string * string) list
 type return_val = string
 
 (* The type of code block. *)
-type block_type = Function | Module | Variable | Type | Comment | Unknown
+type block_type = Function | Module | Variable | Type | Comment | Match | Unknown
 
 type infraction = Infraction
 
