@@ -3,33 +3,39 @@
  formatter rules and be used to put together the final output file.
 *)
 
-type block = Block
-
 (* Parameters, if any, of the code block.  *)
 type params = (string * string) list
 
-(* Return value, if any, of the code block. *)
-type return_val = string
+(* Return type, if any, of the code block. *)
+type return_type = string
 
 (* The type of code block. *)
 type block_type = Function | Module | Variable | Type | Comment | Match | Unknown
 
 type infraction = Infraction
 
+type infraction_list = infraction list
+
 (* Variable name of code block. *)
-val name: string
+type name =  string
 
-(* Code content in string format. *)
-val content_strings: string list
+type content_strings = string list
 
-(* The list of infractions relating to this block of code. *)
-val infractions: infraction list
+type block = (name * params * return_type * block_type * infraction_list * content_strings)
+
+val empty: block
+
+val update_name: name -> block -> block
+
+val update_params: params -> block -> block
+
+val update_return_type: return_type -> block -> block
+
+val update_block_type: block_type -> block -> block
+
+val update_infraction_list: infraction_list -> block -> block
+
+val update_content_strings: content_strings -> block -> block
 
 (* Function converting a string of code to a code block. *)
 val str_to_block: string -> block
-
-(* Function converting a code block to a string of code. *)
-val block_to_str: block -> string
-
-(* List of blocks of code within this block of code. *)
-val content_blocks: block list

@@ -1,6 +1,10 @@
 open Block
 
 (*
+ Gets params from the command line and returns them as a list of strings.
+*)
+
+(*
  To normalize files, we will sanitize them by converting 
  the list of strings representing a file into a list of Blocks.
 *)

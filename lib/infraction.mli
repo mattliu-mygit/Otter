@@ -5,14 +5,28 @@
 *)
 
 (* Name of file with infraction. *)
-val file_name: string
+type file_name = string
 
 (* Lines and columns infraction occurred on. *)
-val lines: int * int
-val columns: (int * int) list
+type lines = int * int
+type columns = (int * int) list
 
 (* The description of the infraction. *)
-val issue_description: string
+type issue_description = string
 
 (* Actual lines of code that infraction occurred on. *)
-val infraction_lines: string list
+type infraction_lines = string list
+
+type infraction = (file_name * lines * columns * issue_description * infraction_lines)
+
+val empty: infraction
+
+val update_file_name: infraction -> file_name -> infraction
+
+val update_lines: infraction -> lines -> infraction
+
+val update_columns: infraction -> columns -> infraction
+
+val update_issue_description: infraction -> issue_description -> infraction
+
+val update_infraction_lines: infraction -> infraction_lines -> infraction
