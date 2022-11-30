@@ -25,7 +25,7 @@ val check_function_length: block list -> block list
 type modification_type = Indent | Parameter_count | Duplicate | Variable_names | Function_length
 
 (* 
-   Will produce a list of updated infractions and either produce a modified list of string lines 
-   represented based on the given modification flag and areas to modify or return just an indent and line-formatted version.
+ Will produce a list of updated infractions and either produce a modified list of string lines 
+ represented based on the given modification flag and areas to modify or return just an indent and line-formatted version.
 *)
 val update_file: block list -> bool -> modification_type list -> int -> int -> string list * infraction list
