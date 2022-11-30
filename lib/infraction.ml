@@ -5,14 +5,8 @@
 
 type infraction = {file_name: string; lines: int * int; columns: (int * int) list; issue_description: string; infraction_lines: string list}
 
-let empty : infraction = {file_name = ""; lines = (0, 0); columns = []; issue_description = ""; infraction_lines = []}
+let infraction_to_output (infraction: infraction) : string =
+  "File: \"" ^ infraction.file_name ^ "\", lines " ^ (string_of_int (fst infraction.lines)) ^ "-" ^ (string_of_int (snd infraction.lines)) ^ ", characters " ^ (String.concat ", " (List.map (fun a -> (string_of_int (fst a)) ^ "-" ^ (string_of_int (snd a))) infraction.columns)) ^ "\n\t" ^ infraction.issue_description ^ "\n"
 
-let update_file_name (file_name : string) (infraction : infraction) : infraction = {infraction with file_name = file_name}
-
-let update_lines (lines : int * int) (infraction : infraction) : infraction = {infraction with lines = lines}
-
-let update_columns (columns : (int * int) list) (infraction : infraction) : infraction = {infraction with columns = columns}
-
-let update_issue_description (issue_description : string) (infraction : infraction) : infraction = {infraction with issue_description = issue_description}
-
-let update_infraction_lines (infraction_lines : string list) (infraction : infraction) : infraction = {infraction with infraction_lines = infraction_lines}
+let create_infraction (file_name: string) (lines: int * int) (columns: (int * int) list) (issue_description: string) (infraction_lines: string list) : infraction =
+  {file_name; lines; columns; issue_description; infraction_lines}
