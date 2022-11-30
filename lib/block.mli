@@ -38,4 +38,4 @@ val update_infraction_list: infraction_list -> block -> block
 val update_content_strings: content_strings -> block -> block
 
 (* Function converting a string of code to a code block. *)
-val str_to_block: string -> block
+val str_to_block: string -> (block * string)
