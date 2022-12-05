@@ -1,8 +1,20 @@
-open Block
-
-(*
+(* (*
  Gets params from the command line and returns them as a list of strings.
 *)
+type function_block = {
+    name: string;
+    params: (string*string) list;
+    return_type: string;
+    body: string list;
+    block_list: string list;
+}
+
+type variable_block = {
+    name: string;
+    value_type: string;
+    block_list: string list;
+}
+
 
 (*
  To normalize files, we will sanitize them by converting 
@@ -29,3 +41,19 @@ type modification_type = Indent | Parameter_count | Duplicate | Variable_names |
  represented based on the given modification flag and areas to modify or return just an indent and line-formatted version.
 *)
 val update_file: block list -> bool -> modification_type list -> int -> int -> string list * infraction list
+
+(* decision tree backtracking-esque way of parsing blocks within other blocks *)
+val parse_block: string -> block list *)
+
+
+type Comment = {
+    content: string list;
+}
+
+type Unknown = {
+    content: string list;
+}
+
+type block = Comment | Unknown
+
+val str_to_block: string -> (block*string)
