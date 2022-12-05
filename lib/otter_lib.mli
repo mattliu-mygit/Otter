@@ -46,11 +46,11 @@ val update_file: block list -> bool -> modification_type list -> int -> int -> s
 val parse_block: string -> block list *)
 
 
-type Comment = {
+type comment = {
     content: string list;
 }
 
-type Unknown = {
+type unknown = {
     content: string list;
 }
 

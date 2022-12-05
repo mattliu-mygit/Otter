@@ -14,12 +14,12 @@ let fun2 (var_one: float) (var_two: float): float =
   else sum
 ;;
 
-
 (* Samples *)
 
 let outer a: int (b: int) =
-  let inner c d = 0 in
-  inner a b
+  let inner c d = 
+    0
+  in inner a b
 
 let new_func a b =
   0
