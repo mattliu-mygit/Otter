@@ -4,7 +4,6 @@
   lib/dune
   lib/otter_lib.mli
   lib/otter.ml
-  lib/block.mli
   lib/infraction.mli
   tests/tests.ml
   tests/dune)

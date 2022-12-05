@@ -56,4 +56,4 @@ type unknown = {
 
 type block = Comment | Unknown
 
-val str_to_block: string -> (block*string)
+val str_to_block: string list -> block list -> block list

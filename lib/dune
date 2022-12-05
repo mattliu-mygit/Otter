@@ -1,10 +1,9 @@
 (library
  (name otter_lib)
- (modules otter_lib infraction block)
+ (modules otter_lib infraction)
  (libraries core yojson)
  (preprocess
-  (pps bisect_ppx ppx_deriving_yojson))
- (modules_without_implementation block infraction otter_lib))
+  (pps bisect_ppx ppx_deriving_yojson)))
 
 (executable
  (name Otter)

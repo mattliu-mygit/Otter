@@ -2,34 +2,85 @@ open Core;;
 open Str;;
 
 (* (* Find the end comment and concatenate substrings before and after the comment *) *)
-type comment = {
-    content: string list;
-}
 
-type unknown = {
-    content: string list;
-}
+(*
+   We need to make types for both comment and unknown blocks, and then a generic block type that can be either of them.
+*)
+module type Comment = sig
+  type t
+  val make : string list -> t
+end
 
-type block = Comment | Unknown
+module type Unknown = sig
+  type t
+  val make : string list -> t
+end
 
-let start_comment = Str.regexp {| *(\*|};;
+module type Block = sig
+  type t
+  val make : string list -> t
+end
 
-let rec str_to_block (str_list: string list) (acc: block list) =
+module Comment = struct
+  type t = {content: string list}
+  let make s = {content = s}
+end
+
+module Unknown = struct
+  type t = {content: string list}
+  let make s = {content = s}
+end
+
+module Block = struct
+  type t = Comment of Comment.t | Unknown of Unknown.t
+  let make s = Unknown (Unknown.make s)
+end
+
+
+let comment_regexp = Str.regexp {| *(\*|}
+let end_comment_regexp = Str.regexp {| *\*)|}
+
+let start_comment (line:string) = 
+ Str.string_match comment_regexp line 0
+
+
+let rec get_comment (substrs: string list) (num_open: int) (acc: string list): (Block.t*string list) = 
+    match num_open with
+    | 0 -> (Block.make acc, substrs)
+    | _ -> 
+        match substrs with
+        | [] -> (Block.make acc, [])
+        | hd::tl -> 
+         match Str.string_match comment_regexp hd 0, Str.string_match end_comment_regexp hd 0 with
+         | true, false -> get_comment tl (num_open + 1) (acc @ [hd])
+         | false, true -> get_comment tl (num_open - 1) (acc @ [hd])
+         | true, true ->
+             let next_end_pos = Str.search_forward end_comment_regexp hd 0 in
+             let next_begin_pos = Str.search_forward comment_regexp hd 0 in
+             (match next_end_pos < next_begin_pos with
+             | true -> 
+                 let after_comment = Str.string_after hd next_end_pos in
+                 let before_comment = Str.string_before hd next_end_pos in
+                 let acc_content = acc @ [before_comment] in
+                 (Block.make acc_content, after_comment::tl)
+             | false -> get_comment ((Str.string_after hd next_end_pos)::tl) num_open (acc @ [Str.string_before hd next_end_pos]))
+         | false, false -> get_comment tl num_open (acc @ [hd])
+
+let get_unknown = 0
+
+let rec str_to_block (str_list: string list) (acc: Block.t list): Block.t list =
   match str_list with
   | [] -> acc
   | line :: tail ->
-    if Str.string_match start_comment line 0 then
-      let (block, rest) = get_comment in
-              str_to_block rest (block :: acc)
+    if start_comment line then
+      let pos = Str.search_forward comment_regexp line 0 in
+      let others = Str.string_after line pos in
+      let init = Str.before line pos in
+      let (block, rest) = get_comment others:tail 1 [init] in
+              str_to_Block rest (block::acc)
     else []
     
 
-let rec get_comment (substring: string) (num_open: int): int =
-
-;;
-            (**)
-let get_unknown = 
-;;
   
 
 let rec open_parens (str: string): int =
