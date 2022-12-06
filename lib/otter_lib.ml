@@ -33,8 +33,23 @@ end
 
 module Block = struct
   type t = Comment of Comment.t | Unknown of Unknown.t
+  type block_list = t list
+
   let make s = Unknown (Unknown.make s)
 end
+
+module type Function = sig
+  type t
+  val make : string list -> t
+end
+
+module Function = struct
+  type t = {name: string; args: string list; body: Block.block_list}
+  let make s = {name = ""; args = []; body = []}
+end
+
+(*
+   We need to make a type for the whole file, and then a type for the file's contents.
 
 
 let comment_regexp = Str.regexp {| *(\*|}
@@ -44,7 +59,11 @@ let start_comment (line:string) =
  Str.string_match comment_regexp line 0
 
 
-let rec get_comment (str:) (num_open: int) (acc: string) (total: string list): (Block.t*string list) = 
+let rec get_comment (str:string) (num_open: int): (Block.t*string list) = 
+ match num_open with
+    | 0 -> (Block.make total, substrs)
+    | _ -> 
+
 
 
     (* match num_open with
