@@ -38,6 +38,8 @@ end
 
 module Block = struct
   type t = Comment of Comment.t | Unknown of Unknown.t
+  type block_list = t list
+
   let make s = Unknown (Unknown.make s)
 end
 
@@ -70,27 +72,36 @@ let start_comment (line: string) =
  Str.string_match comment_regexp line 0
 ;;
 
-let rec get_comment (substrs: string list) (num_open: int) (acc: string list): (Block.t*string list) = 
-    match num_open with
-    | 0 -> (Block.make acc, substrs)
+let rec get_comment (str:string) (num_open: int): (Block.t*string list) = 
+ match num_open with
+    | 0 -> (Block.make total, substrs)
     | _ -> 
-        match substrs with
-        | [] -> (Block.make acc, [])
+
+
+
+    (* match num_open with
+    | 0 -> (Block.make total, substrs)
+    | _ -> 
+        (match substrs with
+        | [] -> (Block.make (total @ [acc]) [])
         | hd::tl -> 
-         match Str.string_match comment_regexp hd 0, Str.string_match end_comment_regexp hd 0 with
-         | true, false -> get_comment tl (num_open + 1) (acc @ [hd])
-         | false, true -> get_comment tl (num_open - 1) (acc @ [hd])
-         | true, true ->
-             let next_end_pos = Str.search_forward end_comment_regexp hd 0 in
-             let next_begin_pos = Str.search_forward comment_regexp hd 0 in
-             (match next_end_pos < next_begin_pos with
-             | true -> 
-                 let after_comment = Str.string_after hd next_end_pos in
-                 let before_comment = Str.string_before hd next_end_pos in
-                 let acc_content = acc @ [before_comment] in
-                 (Block.make acc_content, after_comment::tl)
-             | false -> get_comment ((Str.string_after hd next_end_pos)::tl) num_open (acc @ [Str.string_before hd next_end_pos]))
-         | false, false -> get_comment tl num_open (acc @ [hd])
+         (match hd with
+         | "" -> get_comment tl num_open "" (total @ [acc])
+         | _ -> 
+          (match Str.string_match comment_regexp hd 0, Str.string_match end_comment_regexp hd 0 with
+          | true, false -> get_comment ((Str.string_after hd ((Str.search_forward comment_regexp hd 0) + 2))::tl) (num_open + 1) (acc^(Str.string_before hd (Str.search_forward comment_regexp hd 0))) total
+          | false, true -> get_comment ((Str.string_after hd ((Str.search_forward end_comment_regexp hd 0)+2))::tl) (num_open - 1) (acc^(Str.string_before hd (Str.search_forward end_comment_regexp hd 0))) total
+          | true, true ->
+              let next_end_pos = Str.search_forward end_comment_regexp hd 0 in
+              let next_begin_pos = Str.search_forward comment_regexp hd 0 in
+              (match next_end_pos < next_begin_pos with
+              | true -> 
+                  let after_comment = Str.string_after hd next_end_pos in
+                  let before_comment = Str.string_before hd next_end_pos in
+                  let acc_content = acc^before_comment in
+                  (Block.make (total @ [acc_content]), after_comment::tl)
+              | false -> get_comment ((Str.string_after hd next_end_pos)::tl) num_open (acc^Str.string_before hd next_end_pos) total)
+          | false, false -> get_comment tl num_open "" (total @ [acc])))) *)
 
 let get_unknown = 0
 
@@ -106,7 +117,7 @@ let rec str_to_block (str_list: string list) (acc: block list) =
       let pos = Str.search_forward comment_regexp line 0 in
       let others = Str.string_after line pos in
       let init = Str.before line pos in
-      let (block, rest) = get_comment others:tail 1 [init] in
+      let (block, rest) = get_comment others:tail 1 ind1 [] in
               str_to_Block rest (block::acc)
     else []
     
