@@ -42,6 +42,8 @@ let new_func a b =
   10. let func (a: int) b: int =
 
   11. let () = 
+
+  12. let func a: int =
 *)
 
 (*

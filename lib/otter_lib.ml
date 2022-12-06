@@ -16,6 +16,11 @@ module type Unknown = sig
   val make : string list -> t
 end
 
+module type Function = sig
+  type t
+  val make : string -> t
+end
+
 module type Block = sig
   type t
   val make : string list -> t
@@ -36,13 +41,34 @@ module Block = struct
   let make s = Unknown (Unknown.make s)
 end
 
+module Function = struct
+  type definition_fields =
+  {
+    name: string;
+    parameters: (string * string) list;
+    return_type: string;
+    recursive: bool
+  }
 
-let comment_regexp = Str.regexp {| *(\*|}
-let end_comment_regexp = Str.regexp {| *\*)|}
+  type t =
+  {
+    content: string; (* full function content *)
+    body: string; (* body of the function *)
+    blocks: string list; (* TODO: change to block list *)
+    fields: definition_fields
+  }
 
-let start_comment (line:string) = 
+end
+
+let comment_regexp = Str.regexp {| *(\*|};;
+let end_comment_regexp = Str.regexp {| *\*)|};;
+let function_regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};;
+
+let remove_leading_whitespaces (str: string): string = Str.replace_first (Str.regexp "^[ \n\t\r]+") "" str;;
+
+let start_comment (line: string) =
  Str.string_match comment_regexp line 0
-
+;;
 
 let rec get_comment (substrs: string list) (num_open: int) (acc: string list): (Block.t*string list) = 
     match num_open with
@@ -68,7 +94,11 @@ let rec get_comment (substrs: string list) (num_open: int) (acc: string list): (
 
 let get_unknown = 0
 
-let rec str_to_block (str_list: string list) (acc: Block.t list): Block.t list =
+(* Regular Expression to match function declarations:
+? "let[any number of spaces][function name][any number of spaces][at least one parameter]"
+*)
+
+let rec str_to_block (str_list: string list) (acc: block list) =
   match str_list with
   | [] -> acc
   | line :: tail ->
@@ -80,51 +110,63 @@ let rec str_to_block (str_list: string list) (acc: Block.t list): Block.t list =
               str_to_Block rest (block::acc)
     else []
     
+let get_function (file_contents: string): (Function.t * string) =
 
+let get_function_name (file_contents: string): (Function.definition_fields * string) =
+  let length = String.length file_contents in
+  let sanitized = remove_leading_whitespaces file_contents |> String.sub ~pos:4 ~len:(length - 4) |> remove_leading_whitespaces in (* Remove leading whitespaces and "let " *)
+  let sanitized_length = String.length sanitized in
+  let first_space = String.index_exn sanitized ' ' in (* Retrieve index of first space character *)
+  let first_token = String.sub sanitized ~pos:0 ~len:first_space in
+  let remainder = String.sub sanitized ~pos:(first_space + 1) ~len:(sanitized_length - first_space - 1) in
+  match first_token with
+  | "rec" | "nonrec" ->
+    let function_name_start = first_space + 1 in
+    let function_name_end = first_space + 1 + (String.index_exn remainder ' ') in
+    let function_name = String.sub sanitized ~pos:function_name_start ~len:(function_name_end - function_name_start) in
+    let remainder = String.sub sanitized ~pos:(function_name_end + 1) ~len:(sanitized_length - function_name_end - 1) in
+    let return_block: Function.definition_fields = {
+      name = function_name;
+      parameters = [];
+      return_type = "";
+      recursive = String.(first_token = "rec");
+    } in
+    (return_block, remainder)
+  | _ ->
+    let return_block: Function.definition_fields = {
+      name = first_token;
+      parameters = [];
+      return_type = "";
+      recursive = false;
+    } in
+    (return_block, remainder)
+;;
+
+(*
+  If ":[type]" is given without being followed by a parentheses, it is the return type of the function
+*)
+let get_parameters (file_contents: string) (accum: (string * string) list): (Function.definition_fields * string) =
+  if String.length file_contents = 0 then (accum, "")
+  else
+    (* Remove leading whitespaces *)
+    let no_leading_whitespace = Str.replace_first (Str.regexp "^[ \n\t\r]+") "" file_contents in
+    match String.[0] file_contents with
+    | "=" -> (* Terminate and return *)
+    | ":" -> (* We have a type *)
   
 
-let rec open_parens (str: string): int =
-  match str with
-  | "" -> -1
-  | s -> match String.rindex s '(' with
-    | None -> -1
-    | Some n ->
-      if (n + 1) >= (String.length s) then
-        open_parens (String.sub s ~pos:(0) ~len:(n))
-      else if Char.(s.[n + 1] = '*') then n
-      else open_parens (String.sub s ~pos:(0) ~len:(n))
-  ;;
 
-let rec closed_parens (str: string): int =
-  match str with
-  | "" -> -1
-  | s -> match String.index s '*' with
-    | None -> -1
-    | Some n ->
-      if (n + 1) >= (String.length s) then -1
-      else if Char.(s.[n + 1] = ')') then n + 1
-      else let next =
-        closed_parens (String.sub s ~pos:(n + 1) ~len:((String.length s) - (n + 1))) in
-        match next with
-        | -1 -> -1
-        | x -> n + 1 + x
-  ;;
+let get_unknown = 
+;;
+  
+
+
+(* TODO : Assume they don't do the following 💀
+  let sum = fun x y -> x + y
+
+  let sum (x: int) (y: int)
+  = x + y
+
+  all functions are defined by "let function_name..." (i.e. no anonymous functions)
    
-let rec strip (str: string): string =
-  let start_comment = open_parens str in
-
-  (* Process a comment *)
-  (* (* Find the end comment and concatenate substrings before and after the comment *) *)
-  if start_comment <> -1 then
-    let end_comment =
-      start_comment +
-      (closed_parens (String.sub str ~pos:(start_comment) ~len:((String.length str) - start_comment))) in
-    (
-      (String.sub str ~pos:(0) ~len:(start_comment))
-      ^
-      (String.sub str ~pos:(end_comment + 1) ~len:((String.length str) - end_comment - 1))
-    ) |> strip
-
-  (* No further action necessary *)
-  else str
-  ;;
+*)
