@@ -1,10 +1,9 @@
 (library
  (name otter_lib)
- (modules raft infraction function)
+ (modules raft infraction function comment block unknown)
  (libraries core yojson)
  (preprocess
   (pps bisect_ppx ppx_deriving_yojson)))
-
 
 (executable
  (name Otter)

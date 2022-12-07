@@ -16,7 +16,7 @@ type properties =
   fields: definition_fields
 }
 
-let remove_leading_whitespaces (str: string): string = Str.replace_first (Str.regexp "^[ \n\t\r]+") "" str;;
+
 
 (* Regular Expression to match function declarations:
 ? "let[any number of spaces][function name][any number of spaces][at least one parameter]"
@@ -28,7 +28,7 @@ let get_function (file_contents: string): (properties * string) =
 
 let get_function_name (file_contents: string): (definition_fields * string) =
   let length = String.length file_contents in
-  let sanitized = remove_leading_whitespaces file_contents |> String.sub ~pos:4 ~len:(length - 4) |> remove_leading_whitespaces in (* Remove leading whitespaces and "let " *)
+  let sanitized = Block.remove_leading_whitespaces file_contents |> String.sub ~pos:4 ~len:(length - 4) |> Block.remove_leading_whitespaces in (* Remove leading whitespaces and "let " *)
   let sanitized_length = String.length sanitized in
   let first_space = String.index_exn sanitized ' ' in (* Retrieve index of first space character *)
   let first_token = String.sub sanitized ~pos:0 ~len:first_space in

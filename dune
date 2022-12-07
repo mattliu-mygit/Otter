@@ -4,8 +4,15 @@
   lib/dune
   lib/raft.mli
   lib/raft.ml
+  lib/block.mli
+  lib/block.ml
+  lib/comment.mli
+  lib/comment.ml
+  lib/unknown.ml
+  lib/unknown.ml
   lib/otter.ml
   lib/infraction.mli
+  lib/infraction.ml
   lib/function.ml
   lib/function.mli
   tests/tests.ml

@@ -1,5 +1,4 @@
 open Core;;
-open Str;;
 
 module F = Function
 
@@ -8,37 +7,17 @@ module F = Function
 (*
    We need to make types for both comment and unknown blocks, and then a generic block type that can be either of them.
 *)
-module type Comment = sig
+
+(* module type Block = sig
   type t
   val make : string -> t
-end
+end *)
 
-module type Unknown = sig
-  type t
-  val make : string -> t
-end
 
-module type Block = sig
-  type t
-  val make : string -> t
-end
 
-module Comment = struct
-  type t = {content: string}
-  let make s = {content = s}
-end
 
-module Unknown = struct
-  type t = {content: string}
-  let make s = {content = s}
-end
 
-module Block = struct
-  type t = Comment of Comment.t | Unknown of Unknown.t
-  type block_list = t list
 
-  let make s = Unknown (Unknown.make s)
-end
 
 let comment_regexp = Str.regexp {| *(\*|};;
 let end_comment_regexp = Str.regexp {| *\*)|};;
@@ -66,14 +45,10 @@ let rec str_to_block (str: string) (acc: Block.block_list): Block.block_list =
  if start_comment str then
    let pos = Str.search_forward comment_regexp str 0 in
    let others = Str.string_after str pos in
-   let init = Str.string_before str pos in
    let (block, rest) = get_comment others 1 "(*" in
            str_to_block rest (block::acc)
- else []
+ else [Block.make str]
     
-let get_unknown = 
-  failwith "unimplemented"
-;;
   
 (* TODO : Assume they don't do the following 💀
   let sum = fun x y -> x + y

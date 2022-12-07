@@ -14,8 +14,6 @@ type properties =
   fields: definition_fields
 }
 
-val remove_leading_whitespaces: string -> string
-
 val get_function: string -> (properties * string)
 
 val get_function_name: string -> (definition_fields * string)
