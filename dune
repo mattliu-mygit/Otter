@@ -2,9 +2,12 @@
  (target otter.zip)
  (deps
   lib/dune
-  lib/otter_lib.mli
+  lib/raft.mli
+  lib/raft.ml
   lib/otter.ml
   lib/infraction.mli
+  lib/function.ml
+  lib/function.mli
   tests/tests.ml
   tests/dune)
  (action
