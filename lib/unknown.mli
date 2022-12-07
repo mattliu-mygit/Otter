@@ -1,6 +1,5 @@
-module type Unknown = sig
- type t
- val make : string -> t
-end
+
+type t
+val make : string -> t
 
 (* val get_unknown *)

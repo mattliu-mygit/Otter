@@ -1,3 +1,8 @@
+module type Comment = sig
+ type t 
+ val make : string -> t
+end
+
 type t
 type block_list = t list
 val make : string -> t

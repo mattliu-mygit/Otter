@@ -1,10 +1,7 @@
-module type Comment = sig
- type t
- val make : string -> t
-end
+val comment_regexp: Str.regexp
 
-val comment_regexp: string -> Str.regexp
+val end_comment_regexp: Str.regexp
 
-val end_comment_regexp: string -> Str.regexp
+val get_comment: string -> int -> string -> (Block.t * string)
 
-val get_comment: string -> int -> string -> (Block.t * int)
+val start_comment: string -> bool
