@@ -21,6 +21,8 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
    let pos = Str.search_forward Comment.comment_regexp str 0 in
    let others = Str.string_after str pos in
    let block, rest = Comment.get_comment others 1 "(*" seq_num in
+           let _ = print_endline (string_of_int (Comment.get_sequence_num block)) in
+           let _ = print_endline (Comment.get_content block) in
            str_to_block rest ({
              comments = block::acc.comments;
              (* unknowns = acc.unknowns; *)

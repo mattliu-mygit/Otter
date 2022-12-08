@@ -22,3 +22,7 @@ let rec get_comment (str:string) (num_open: int) (acc:string) (seq_num:int): (co
         | false -> ({content=(acc^(Str.string_before str (first_close+2))); sequence_num=seq_num}, (Str.string_after str (first_close+2))))
       | false -> 
        get_comment (Str.string_after str (first_close+2)) (num_open - 1) (acc^(Str.string_before str (first_close+2))) seq_num) 
+
+let get_sequence_num (comm: comment) = comm.sequence_num
+
+let get_content (comm: comment) = comm.content
