@@ -18,4 +18,4 @@ val get_function: string -> (properties * string)
 
 val get_function_name: string -> (definition_fields * string)
 
-val get_parameters: string -> definition_fields -> (definition_fields * string)
+(* val get_parameters: string -> definition_fields -> (definition_fields * string) *)

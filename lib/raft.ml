@@ -13,18 +13,18 @@ end *)
 
 type block_count = {
  comments:Comment.comment list;
- unknowns:Unknown.t list;
+ (* unknowns:Unknown.t list; *)
 }
 
-let rec str_to_block (str: string) (acc: block_count): block_count =
+let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
  if Comment.start_comment str then
    let pos = Str.search_forward Comment.comment_regexp str 0 in
    let others = Str.string_after str pos in
-   let block, rest = Comment.get_comment others 1 "(*" in
+   let block, rest = Comment.get_comment others 1 "(*" seq_num in
            str_to_block rest ({
              comments = block::acc.comments;
-             unknowns = acc.unknowns;
-           })
+             (* unknowns = acc.unknowns; *)
+           }) (seq_num + 1)
  else acc
     
   
