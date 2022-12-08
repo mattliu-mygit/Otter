@@ -1,1 +1,0 @@
-let remove_leading_whitespaces (str: string): string = Str.replace_first (Str.regexp "^[ \n\t\r]+") "" str;;

@@ -1,4 +1,5 @@
 open OUnit2
+open Core
 open Otter_lib
 
 (**
@@ -49,23 +50,6 @@ let function_tests = "Function Tests" >: test_list [
   ]
 
 (**
-    General Tests   
-**)
-
-let test_remove_leading_whitespaces _ =
-  assert_equal (Block.remove_leading_whitespaces "no change") @@ "no change";
-  assert_equal (Block.remove_leading_whitespaces "  front and back  ") @@ "front and back  ";
-  assert_equal (Block.remove_leading_whitespaces "\n\nnewline") @@ "newline";
-  assert_equal (Block.remove_leading_whitespaces "\n\nnewline\n") @@ "newline\n";
-  assert_equal (Block.remove_leading_whitespaces "\ttabs") @@ "tabs";
-  assert_equal (Block.remove_leading_whitespaces "\n\rnewline and carriage return") @@ "newline and carriage return";
-  assert_equal (Block.remove_leading_whitespaces "  \n  \t \r \t  all of them") @@ "all of them"
-
-let block_tests = "Block Tests" >: test_list [
-    "Remove Leading Whitespaces" >:: test_remove_leading_whitespaces;
-  ]
-
-(**
     Regular Expression Tests   
 **)
 (* This is copied and pasted from the function.ml file. It's technically not a function, but we want to test regular expressions regardless *)
@@ -83,7 +67,6 @@ let regex_tests = "Regular Expression Tests" >: test_list [
 
 let series = "Otter Tests" >::: [
     function_tests;
-    block_tests;
     regex_tests;
   ]
 let () =

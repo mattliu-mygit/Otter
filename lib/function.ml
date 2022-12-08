@@ -26,16 +26,16 @@ let get_function (file_contents: string): (function_ * string) =
 
 let get_function_name (file_contents: string): (definition_fields * string) =
 
-  let no_leading_whitespace = Block.remove_leading_whitespaces file_contents in
+  let no_leading_whitespace = String.lstrip file_contents in
   let length = String.length no_leading_whitespace in
-  let sanitized = String.sub no_leading_whitespace ~pos:4 ~len:(length - 4) |> Block.remove_leading_whitespaces in (* Remove leading whitespaces and "let " *)
+  let sanitized = String.sub no_leading_whitespace ~pos:4 ~len:(length - 4) |> String.lstrip in (* Remove leading whitespaces and "let " *)
   let sanitized_length = String.length sanitized in
   let first_space = String.index_exn sanitized ' ' in (* Retrieve index of first space character *)
   let first_token = String.sub sanitized ~pos:0 ~len:first_space in
   let remainder = String.sub sanitized ~pos:(first_space + 1) ~len:(sanitized_length - first_space - 1) in
   match first_token with
   | "rec" | "nonrec" ->
-    let function_name_sanitized = Block.remove_leading_whitespaces remainder in
+    let function_name_sanitized = String.lstrip remainder in
     let function_name_sanitized_length = String.length function_name_sanitized in
     let function_name_end = String.index_exn function_name_sanitized ' ' in
     let function_name = String.sub function_name_sanitized ~pos:0 ~len:(function_name_end) in
@@ -46,7 +46,7 @@ let get_function_name (file_contents: string): (definition_fields * string) =
       return_type = "";
       recursive = String.(first_token = "rec");
     } in
-    (return_block, Block.remove_leading_whitespaces remainder)
+    (return_block, String.lstrip remainder)
   | _ ->
     let return_block = {
       name = first_token;
@@ -54,11 +54,12 @@ let get_function_name (file_contents: string): (definition_fields * string) =
       return_type = "";
       recursive = false;
     } in
-    (return_block, Block.remove_leading_whitespaces remainder)
+    (return_block, String.lstrip remainder)
 ;;
 (*
   If ":[type]" is given without being followed by a parentheses, it is the return type of the function
 *)
+
 (* let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
   let rec get_parameters_rec (str: string) (accum: (string * string) list) (return_type: string): (definition_fields * string) =
     if String.length str = 0 then
@@ -71,7 +72,7 @@ let get_function_name (file_contents: string): (definition_fields * string) =
         (fields, "")
     else
       (* Remove leading whitespaces *)
-      let no_leading_whitespace = remove_leading_whitespaces str in
+      let no_leading_whitespace = String.lstrip str in
       match no_leading_whitespace.[0] with
       | '=' ->
         let length = String.length str in
@@ -93,9 +94,10 @@ let get_function_name (file_contents: string): (definition_fields * string) =
         let newline_index = match String.index no_leading_whitespace '\n' with
         | Some n -> n
         | None -> -1 in
+        
       | _ -> (* parameter name *)
         failwith "unimplemented"
   in *)
 
 let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
-  (init, file_contents)
+  (init, file_contents);;
