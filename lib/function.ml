@@ -25,7 +25,6 @@ let get_function (file_contents: string): (function_ * string) =
   failwith file_contents
 
 let get_function_name (file_contents: string): (definition_fields * string) =
-
   let no_leading_whitespace = String.lstrip file_contents in
   let length = String.length no_leading_whitespace in
   let sanitized = String.sub no_leading_whitespace ~pos:4 ~len:(length - 4) |> String.lstrip in (* Remove leading whitespaces and "let " *)
@@ -59,10 +58,12 @@ let get_function_name (file_contents: string): (definition_fields * string) =
 (*
   If ":[type]" is given without being followed by a parentheses, it is the return type of the function
 *)
+let ident_start_regexp = Str.regexp {|[a-z_]|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
+let ident_end_regexp = Str.regexp {|[^A-Za-z0-9_']|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
 
-(* let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
+let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
   let rec get_parameters_rec (str: string) (accum: (string * string) list) (return_type: string): (definition_fields * string) =
-    if String.length str = 0 then
+    if String.is_empty str then
       let fields = {
           name = init.name;
           parameters = accum;
@@ -73,9 +74,10 @@ let get_function_name (file_contents: string): (definition_fields * string) =
     else
       (* Remove leading whitespaces *)
       let no_leading_whitespace = String.lstrip str in
+      let length = String.length no_leading_whitespace in
       match no_leading_whitespace.[0] with
       | '=' ->
-        let length = String.length str in
+        begin
         let remainder = String.sub no_leading_whitespace ~pos:1 ~len:(length - 1) in
         let fields = {
           name = init.name;
@@ -83,21 +85,48 @@ let get_function_name (file_contents: string): (definition_fields * string) =
           return_type = return_type;
           recursive = init.recursive;
         } in
-        (fields, remainder)
+        (fields, String.lstrip remainder)
+        end
       | '(' -> (* possibly a typed parameter *)
-        let colon_index = match String.index no_leading_whitespace ':' with
-        | Some n -> n
-        | None -> -1 in
-        let whitespace_index = match String.index no_leading_whitespace ' ' with
-        | Some n -> n
-        | None -> -1 in
-        let newline_index = match String.index no_leading_whitespace '\n' with
-        | Some n -> n
-        | None -> -1 in
-        
+        (* let fun1 (param1 ): int = param1 *)
+        (* 01234567890123456789012345678901 *)
+        (* 0         1         2         3  *)
+        begin
+        let param_name_start = Str.search_forward ident_start_regexp no_leading_whitespace 1 in
+        let param_name_end = Str.search_forward ident_end_regexp no_leading_whitespace param_name_start in
+        let variable_name = String.sub no_leading_whitespace ~pos:param_name_start ~len:(param_name_end - param_name_start) in
+        let param_name_remainder = String.lstrip (String.sub no_leading_whitespace ~pos:param_name_end ~len:(length - param_name_end)) in
+        let param_name_remainder_length = String.length param_name_remainder in
+        match param_name_remainder.[0] with
+        | ':' -> (* handle type *)
+          begin
+          let type_name_start = Str.search_forward ident_start_regexp param_name_remainder 1 in
+          let type_name_end = String.index_exn param_name_remainder ')' in
+          let type_name = String.rstrip @@ String.sub param_name_remainder ~pos:type_name_start ~len:(type_name_end - type_name_start) in
+          let remainder = String.lstrip @@ String.sub param_name_remainder ~pos:(type_name_end + 1) ~len:(param_name_remainder_length - type_name_end - 1) in
+          get_parameters_rec remainder (accum @ [(variable_name, type_name)]) return_type
+          end
+        | ')' -> (* update accum and make recursive call *)
+          begin
+          let remainder = String.lstrip @@ String.sub param_name_remainder ~pos:1 ~len:(param_name_remainder_length - 1) in
+          get_parameters_rec remainder (accum @ [(variable_name, "")]) return_type
+          end
+        | _ -> failwith "unreachable" (* ! The only valid characters are : and ), any other characters will be considered invalid ! *)
+        end
+      | ':' -> (* return type *)
+        begin
+        let type_name_start = Str.search_forward ident_start_regexp no_leading_whitespace 1 in
+        let type_name_end = String.index_exn no_leading_whitespace '=' in
+        let type_name = String.strip @@ String.sub no_leading_whitespace ~pos:type_name_start ~len:(type_name_end - type_name_start) in
+        let remainder = String.lstrip @@ String.sub no_leading_whitespace ~pos:type_name_end ~len:(length - type_name_end) in
+        get_parameters_rec remainder accum type_name
+        end
       | _ -> (* parameter name *)
-        failwith "unimplemented"
-  in *)
-
-let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
-  (init, file_contents);;
+        begin
+        let param_name_start = Str.search_forward ident_start_regexp no_leading_whitespace 0 in
+        let param_name_end = Str.search_forward ident_end_regexp no_leading_whitespace param_name_start in
+        let variable_name = String.sub no_leading_whitespace ~pos:param_name_start ~len:(param_name_end - param_name_start) in
+        let remainder = String.lstrip (String.sub no_leading_whitespace ~pos:param_name_end ~len:(length - param_name_end)) in
+        get_parameters_rec remainder (accum @ [(variable_name, "")]) return_type
+        end
+  in get_parameters_rec file_contents [] ""

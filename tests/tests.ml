@@ -40,8 +40,18 @@ let test_get_function_name _ =
     recursive = false;},
     "( param1 :   int) = ")
 
-let test_get_function_parameters _ = (* TODO: unimplemented function *)
-  assert_equal 1 1
+let test_get_function_parameters _ =
+  let fields1, remainder1 = Function.get_function_name "let function_name    (   param1  :  int  ) (   param2:   int   )   param3  :  int   =    param1" in
+  assert_equal (Function.get_parameters remainder1 fields1) @@
+  ({Function.name = "function_name"; parameters = [("param1", "int");("param2", "int");("param3", "")]; return_type = "int";
+  recursive = false;},
+  "param1");
+
+  let fields2, remainder2 = Function.get_function_name "let rec function_name     param3  :  int   =    param1" in
+  assert_equal (Function.get_parameters remainder2 fields2) @@
+  ({Function.name = "function_name"; parameters = [("param3", "")]; return_type = "int";
+  recursive = true;},
+  "param1")
 
 let function_tests = "Function Tests" >: test_list [
     "Get Function" >:: test_get_function;
@@ -94,11 +104,23 @@ let variable_regexp = Str.regexp {| *let +[A-Za-z0-9]+ =|};;
 let test_variable_regex _ =
   assert_equal true @@ Str.string_match variable_regexp "let x = y + z in more content" 0
 
+let ident_start_regexp = Str.regexp {|[a-z_]|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
+let ident_end_regexp = Str.regexp {|[^A-Za-z0-9_']|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
+let test_ident_start_regexp _ =
+  assert_equal true @@ Str.string_match ident_start_regexp "abracadabra" 0;
+  assert_equal false @@ Str.string_match ident_start_regexp "+var" 0
+
+let test_ident_end_regexp _ =
+  assert_equal true @@ Str.string_match ident_end_regexp "+var" 0;
+  assert_equal false @@ Str.string_match ident_end_regexp "abracadabra" 0
+
 let regex_tests = "Regular Expression Tests" >: test_list [
     "Function" >:: test_function_regex;
     "Open comment" >:: test_open_comment_regexp;
     "Close comment" >:: test_close_comment_regexp;
-    "Variable" >:: test_variable_regex
+    "Variable" >:: test_variable_regex;
+    "Ident Start" >:: test_ident_start_regexp;
+    "Ident End" >:: test_ident_end_regexp;
   ]
 
 let test_start_comment _ = 
