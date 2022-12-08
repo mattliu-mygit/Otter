@@ -24,4 +24,9 @@ let rec get_comment (str:string) (num_open: int) (acc:string) (seq_num:int): (co
        get_comment (Str.string_after str (first_close+2)) (num_open - 1) (acc^(Str.string_before str (first_close+2))) seq_num)
 
 let delete_me (c: comment): string =
-  c.content ^ (string_of_int c.sequence_num);;
+  c.content ^ (string_of_int c.sequence_num)
+
+  let get_sequence_num (comm: comment) = comm.sequence_num
+
+  let get_content (comm: comment) = comm.content
+
