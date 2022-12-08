@@ -1,17 +1,55 @@
 open OUnit2
 open Otter_lib
 
-let _ = Function.get_function "sss";;
-
 (**
     Function Tests   
 **)
 
-let test_get_function _ = 
+let test_get_function _ = (* TODO: unimplemented function *)
   assert_equal 1 1
 
 let test_get_function_name _ =
-  assert_equal 1 1
+  assert_equal (Function.get_function_name "let function_name (function: string) (name: string): string = ") @@ ({
+    name = "function_name";
+    parameters = [];
+    return_type = "";
+    recursive = false;
+  }, "(function: string) (name: string): string = ");
+
+  assert_equal (Function.get_function_name "let rec function_name (function: string): string = ") @@ ({
+    name = "function_name";
+    parameters = [];
+    return_type = "(function: string): string = ";
+    recursive = true;
+  }, "(function: string): string = ");
+
+  assert_equal (Function.get_function_name "    let function (param): int = ") @@ ({
+    name = "function";
+    parameters = [];
+    return_type = "";
+    recursive = false;
+  }, "(param): int = ");
+
+  assert_equal (Function.get_function_name "let nonrec function_name (function: string): string = ") @@ ({
+    name = "function_name";
+    parameters = [];
+    return_type = "";
+    recursive = false;
+  }, "(function: string): string = ");
+
+  assert_equal (Function.get_function_name "    let    rec   fun_name    ( param1 :   int) = ") @@ ({
+    name = "fun_name";
+    parameters = [];
+    return_type = "";
+    recursive = true;
+  }, "( param1 :   int) = ");
+
+  assert_equal (Function.get_function_name "    let    nonrec   fun_name    ( param1 :   int) = ") @@ ({
+    name = "fun_name";
+    parameters = [];
+    return_type = "";
+    recursive = false;
+  }, "( param1 :   int) = ")
 
 let test_get_function_parameters _ =
   assert_equal 1 1

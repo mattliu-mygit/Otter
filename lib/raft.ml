@@ -1,3 +1,4 @@
+open Str;;
 module F = Function
 
 (* (* Find the end comment and concatenate substrings before and after the comment *) *)
@@ -18,8 +19,8 @@ type block_count = {
 
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
  if Comment.start_comment str then
-   let pos = Str.search_forward Comment.comment_regexp str 0 in
-   let others = Str.string_after str pos in
+   let pos = search_forward Comment.comment_regexp str 0 in
+   let others = string_after str pos in
    let block, rest = Comment.get_comment others 1 "(*" seq_num in
            str_to_block rest ({
              comments = block::acc.comments;
