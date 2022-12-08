@@ -8,7 +8,7 @@
   lib/block.ml
   lib/comment.mli
   lib/comment.ml
-  lib/unknown.ml
+  lib/unknown.mli
   lib/unknown.ml
   lib/otter.ml
   lib/infraction.mli
