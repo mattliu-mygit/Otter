@@ -1,9 +1,5 @@
 open OUnit2
 open Otter_lib
-(* module F : Function = struct
-  type t = int
-  let make _ = 1
-end *)
 
 let _ = Function.get_function "sss";;
 
@@ -48,7 +44,7 @@ let regex_tests = "Regular Expression Tests" >: test_list [
     "Function" >:: test_function_regex;
   ]
 
-let series = "Assignment3 Tests" >::: [
+let series = "Otter Tests" >::: [
     function_tests;
     general_tests;
     regex_tests;
