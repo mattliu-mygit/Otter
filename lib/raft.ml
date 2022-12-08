@@ -1,5 +1,4 @@
 open Str;;
-module F = Function
 
 (* (* Find the end comment and concatenate substrings before and after the comment *) *)
 
@@ -14,6 +13,7 @@ end *)
 
 type block_count = {
  comments: Comment.comment list;
+ (* functions: Function.function_ list; *)
  (* unknowns:Unknown.t list; *)
 }
 
@@ -26,6 +26,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
            let _ = print_endline (Comment.get_content block) in
            str_to_block rest ({
              comments = block::acc.comments;
+             (* functions = []; *)
              (* unknowns = acc.unknowns; *)
            }) (seq_num + 1)
  else acc

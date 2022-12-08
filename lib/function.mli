@@ -1,4 +1,4 @@
-type definition_fields =
+type definition_fields = (* TODO: delete definition once used *)
 {
   name: string;
   parameters: (string * string) list;
@@ -6,7 +6,7 @@ type definition_fields =
   recursive: bool
 }
 
-type properties =
+type function_ = (* TODO: delete definition once used *)
 {
   content: string; (* full function content *)
   body: string; (* body of the function *)
@@ -14,7 +14,7 @@ type properties =
   fields: definition_fields
 }
 
-val get_function: string -> (properties * string)
+val get_function: string -> (function_ * string)
 
 val get_function_name: string -> (definition_fields * string)
 

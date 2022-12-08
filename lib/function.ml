@@ -8,7 +8,7 @@ type definition_fields =
   recursive: bool
 }
 
-type properties =
+type function_ =
 {
   content: string; (* full function content *)
   body: string; (* body of the function *)
@@ -21,7 +21,7 @@ type properties =
 *)
 (* let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; *) (* todo: currently unused *)
 
-let get_function (file_contents: string): (properties * string) =
+let get_function (file_contents: string): (function_ * string) =
   failwith file_contents
 
 let get_function_name (file_contents: string): (definition_fields * string) =
