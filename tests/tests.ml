@@ -87,17 +87,42 @@ let test_start_comment _ =
   assert_equal true @@ Comment.start_comment "    (* This is a comment *)";
   assert_equal false @@ Comment.start_comment " asdf   (* This is a comment *)"
 
-let comment_1:Comment.comment = {Comment.content="(*This is a comment *)"; sequence_num=0}
-let get_comment_1:(Comment.comment*string) = Comment.get_comment "This is a comment *)" 1 "(*" 0
+let comment_1 = {Comment.content="(*This is a comment*)"; sequence_num=0}
+let comment_2 = {Comment.content="(*     This is a comment*)"; sequence_num=1}
+let comment_3 = {Comment.content="(* (*This is a comment*)*)"; sequence_num=2}
+let comment_4 = {Comment.content="(* (*This is a comment*)*)"; sequence_num=2}
+let comment_5 = {Comment.content="(* (*This is a comment*)*)"; sequence_num=2}
+let comment_6 = {Comment.content="(* (*This is a comment*)(*f*)*)"; sequence_num=2}
+let get_comment_1:(Comment.comment*string) = Comment.get_comment "This is a comment*)" 1 "(*" 0
+let get_comment_2:(Comment.comment*string) = Comment.get_comment "     This is a comment*)" 1 "(*" 1
+let get_comment_3:(Comment.comment*string) = Comment.get_comment " (*This is a comment*)*)" 1 "(*" 2
+let get_comment_4:(Comment.comment*string) = Comment.get_comment " (*This is a comment*)*) asdf" 1 "(*" 2
+let get_comment_5:(Comment.comment*string) = Comment.get_comment " (*This is a comment*)*) asd(*f*)" 1 "(*" 2
+let get_comment_6:(Comment.comment*string) = Comment.get_comment " (*This is a comment*)(*f*)*) asd(*f*)" 1 "(*" 2
 
 let test_get_comment _ =
  assert_equal (comment_1, "") @@ get_comment_1;
- assert_equal 0 @@ Comment.get_sequence_num (fst get_comment_1);
- assert_equal "(*This is a comment *)" @@ Comment.get_content (fst get_comment_1)
+ assert_equal (comment_2, "") @@ get_comment_2;
+ assert_equal (comment_3, "") @@ get_comment_3;
+ assert_equal (comment_4, " asdf") @@ get_comment_4;
+ assert_equal (comment_5, " asd(*f*)") @@ get_comment_5;
+ assert_equal (comment_6, " asd(*f*)") @@ get_comment_6
 
-let comment_tests = "Regular Expression Tests" >: test_list [
+let test_get_sequence_num _ =
+ assert_equal 0 @@ Comment.get_sequence_num (fst get_comment_1);
+ assert_equal 1 @@ Comment.get_sequence_num (fst get_comment_2);
+ assert_equal 2 @@ Comment.get_sequence_num (fst get_comment_3)
+
+let test_get_content _ =
+ assert_equal "(*This is a comment*)" @@ Comment.get_content (fst get_comment_1);
+ assert_equal comment_2.content @@ Comment.get_content (fst get_comment_2);
+ assert_equal comment_3.content @@ Comment.get_content (fst get_comment_3)
+
+let comment_tests = "Comment Tests" >: test_list [
  "start_comment" >:: test_start_comment;
  "get_comment" >:: test_get_comment;
+ "get_sequence_num" >:: test_get_sequence_num;
+ "get_content" >:: test_get_content;
 ]
 
 let series = "Otter Tests" >::: [
