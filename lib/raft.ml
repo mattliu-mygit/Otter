@@ -11,13 +11,21 @@ module F = Function
   val make : string -> t
 end *)
 
-let rec str_to_block (str: string) (acc: Block.block_list): Block.block_list =
+type block_count = {
+ comments:Comment.comment list;
+ unknowns:Unknown.t list;
+}
+
+let rec str_to_block (str: string) (acc: block_count): block_count =
  if Comment.start_comment str then
    let pos = Str.search_forward Comment.comment_regexp str 0 in
    let others = Str.string_after str pos in
    let block, rest = Comment.get_comment others 1 "(*" in
-           str_to_block rest (block::acc)
- else [Block.make str]
+           str_to_block rest ({
+             comments = block::acc.comments;
+             unknowns = acc.unknowns;
+           })
+ else acc
     
   
 (* TODO : Assume they don't do the following 💀

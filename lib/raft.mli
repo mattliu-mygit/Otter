@@ -1,3 +1,3 @@
+type block_count
 
-
-val str_to_block: string -> Block.block_list -> Block.block_list
+val str_to_block: string -> block_count -> block_count
