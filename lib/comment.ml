@@ -14,7 +14,7 @@ let rec get_comment (str:string) (num_open: int) (acc:string) (seq_num:int): (co
     | 0 -> ({content=acc; sequence_num=seq_num}, str)
     | _ -> 
      let first_close = Str.search_forward end_comment_regexp str 0 in
-     (match Str.string_match comment_regexp str 0 with
+     (match start_comment str with
       | true -> 
        let second_open = Str.search_forward comment_regexp str 0 in
        (match second_open < first_close with

@@ -1,3 +1,5 @@
 (test
  (name tests)
- (libraries core ounit2 otter_lib))
+ (libraries core ounit2 otter_lib)
+ (instrumentation
+  (backend bisect_ppx)))

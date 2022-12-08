@@ -61,13 +61,46 @@ let test_function_regex _ =
   assert_equal false @@ Str.string_match function_regexp "module Temp = struct end" 0;
   assert_equal false @@ Str.string_match function_regexp "let var1 = 4 + 5" 0
 
+let test_open_comment_regexp _ = 
+  assert_equal true @@ Str.string_match Otter_lib.Comment.comment_regexp "(* This is a comment *)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.comment_regexp "(* This is a comment (* with a nested comment *) *)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.comment_regexp "   (* This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Otter_lib.Comment.comment_regexp "   This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Otter_lib.Comment.comment_regexp "   This is a comm(*ent *)" 0
+
+  let test_close_comment_regexp _ = 
+   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "*)" 0;
+   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp " *) *)" 0;
+   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *)" 0;
+   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *) asdfasdf" 0;
+   assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comment *)" 0;
+   assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comme(*nt *)" 0
+
 let regex_tests = "Regular Expression Tests" >: test_list [
     "Function" >:: test_function_regex;
+    "Open comment" >:: test_open_comment_regexp;
+    "Close comment" >:: test_close_comment_regexp;
   ]
+
+let test_start_comment _ = 
+  assert_equal true @@ Comment.start_comment "(* This is a comment *)";
+  assert_equal true @@ Comment.start_comment "    (* This is a comment *)";
+  assert_equal false @@ Comment.start_comment " asdf   (* This is a comment *)"
+
+let comment1:Comment.comment = { content = "(*This is a comment *)";sequence_num = 0}
+
+let test_get_comment _ =
+ assert_equal (comment1, "") @@ Comment.get_comment "This is a comment *)" 1 "(*" 0
+
+let comment_tests = "Regular Expression Tests" >: test_list [
+ "start_comment" >:: test_start_comment;
+ "get_comment" >:: test_get_comment;
+]
 
 let series = "Otter Tests" >::: [
     function_tests;
     regex_tests;
+    comment_tests;
   ]
 let () =
   run_test_tt_main series
