@@ -39,7 +39,7 @@ let test_get_function_name _ =
     recursive = false;},
     "( param1 :   int) = ")
 
-let test_get_function_parameters _ =
+let test_get_function_parameters _ = (* TODO: unimplemented function *)
   assert_equal 1 1
 
 let function_tests = "Function Tests" >: test_list [
@@ -53,9 +53,15 @@ let function_tests = "Function Tests" >: test_list [
 **)
 
 let test_remove_leading_whitespaces _ =
-  assert_equal 1 1
+  assert_equal (Block.remove_leading_whitespaces "no change") @@ "no change";
+  assert_equal (Block.remove_leading_whitespaces "  front and back  ") @@ "front and back  ";
+  assert_equal (Block.remove_leading_whitespaces "\n\nnewline") @@ "newline";
+  assert_equal (Block.remove_leading_whitespaces "\n\nnewline\n") @@ "newline\n";
+  assert_equal (Block.remove_leading_whitespaces "\ttabs") @@ "tabs";
+  assert_equal (Block.remove_leading_whitespaces "\n\rnewline and carriage return") @@ "newline and carriage return";
+  assert_equal (Block.remove_leading_whitespaces "  \n  \t \r \t  all of them") @@ "all of them"
 
-let general_tests = "General Tests" >: test_list [
+let block_tests = "Block Tests" >: test_list [
     "Remove Leading Whitespaces" >:: test_remove_leading_whitespaces;
   ]
 
@@ -72,7 +78,7 @@ let regex_tests = "Regular Expression Tests" >: test_list [
 
 let series = "Otter Tests" >::: [
     function_tests;
-    general_tests;
+    block_tests;
     regex_tests;
   ]
 let () =
