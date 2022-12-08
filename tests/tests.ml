@@ -49,6 +49,20 @@ let function_tests = "Function Tests" >: test_list [
     "Get Parameters" >:: test_get_function_parameters;
   ]
 
+(** 
+    Variable Tests 
+**)
+
+let test_get_variable _ =
+  assert_equal (Variable.get_variable "let x = y + z in leftover content") @@ ({name = "x"; content = " y + z"}, " in leftover content") 
+
+let test_start_variable _ =
+  assert_equal true @@ Variable.start_variable "let valid_variable = some content"
+let variable_tests = "Variable Tests" >: test_list [
+  "Get Variable" >:: test_get_variable;
+  "Start Variable" >:: test_start_variable;
+]
+
 (**
     Regular Expression Tests   
 **)
@@ -68,18 +82,23 @@ let test_open_comment_regexp _ =
   assert_equal false @@ Str.string_match Otter_lib.Comment.comment_regexp "   This is a comment *)" 0;
   assert_equal false @@ Str.string_match Otter_lib.Comment.comment_regexp "   This is a comm(*ent *)" 0
 
-  let test_close_comment_regexp _ = 
-   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "*)" 0;
-   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp " *) *)" 0;
-   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *)" 0;
-   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *) asdfasdf" 0;
-   assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comment *)" 0;
-   assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comme(*nt *)" 0
+let test_close_comment_regexp _ = 
+  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "*)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp " *) *)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *) asdfasdf" 0;
+  assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comme(*nt *)" 0
+
+let variable_regexp = Str.regexp {| *let +[A-Za-z0-9]+ =|};;
+let test_variable_regex _ =
+  assert_equal true @@ Str.string_match variable_regexp "let x = y + z in more content" 0
 
 let regex_tests = "Regular Expression Tests" >: test_list [
     "Function" >:: test_function_regex;
     "Open comment" >:: test_open_comment_regexp;
     "Close comment" >:: test_close_comment_regexp;
+    "Variable" >:: test_variable_regex
   ]
 
 let test_start_comment _ = 
@@ -102,6 +121,7 @@ let comment_tests = "Regular Expression Tests" >: test_list [
 
 let series = "Otter Tests" >::: [
     function_tests;
+    variable_tests;
     regex_tests;
     comment_tests;
   ]

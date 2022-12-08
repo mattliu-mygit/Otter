@@ -1,4 +1,8 @@
-type variable
+type variable = 
+{
+  name: string;
+  content: string;
+}
 
 val variable_regexp: Str.regexp
 
