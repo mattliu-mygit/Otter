@@ -55,20 +55,46 @@ let get_function_name (file_contents: string): (definition_fields * string) =
     } in
     (return_block, remainder)
 ;;
-
 (*
   If ":[type]" is given without being followed by a parentheses, it is the return type of the function
 *)
 (* let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
-  let rec get_parameters_rec (str: string) (accum: (string * string) list) =
-    if String.length str = 0 then (accum, "")
+  let rec get_parameters_rec (str: string) (accum: (string * string) list) (return_type: string): (definition_fields * string) =
+    if String.length str = 0 then
+      let fields = {
+          name = init.name;
+          parameters = accum;
+          return_type = return_type;
+          recursive = init.recursive;
+        } in
+        (fields, "")
     else
       (* Remove leading whitespaces *)
       let no_leading_whitespace = remove_leading_whitespaces str in
-      if Char.(no_leading_whitespace.[0] = '=') then
+      match no_leading_whitespace.[0] with
+      | '=' ->
         let length = String.length str in
         let remainder = String.sub no_leading_whitespace ~pos:1 ~len:(length - 1) in
         let fields = {
+          name = init.name;
+          parameters = accum;
+          return_type = return_type;
+          recursive = init.recursive;
+        } in
+        (fields, remainder)
+      | '(' -> (* possibly a typed parameter *)
+        let colon_index = match String.index no_leading_whitespace ':' with
+        | Some n -> n
+        | None -> -1 in
+        let whitespace_index = match String.index no_leading_whitespace ' ' with
+        | Some n -> n
+        | None -> -1 in
+        let newline_index = match String.index no_leading_whitespace '\n' with
+        | Some n -> n
+        | None -> -1 in
+      | _ -> (* parameter name *)
+        failwith "unimplemented"
+  in *)
 
-        }
-      else *)
+let get_parameters (file_contents: string) (init: definition_fields): (definition_fields * string) =
+  failwith "unimplemented"
