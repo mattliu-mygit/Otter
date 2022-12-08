@@ -87,10 +87,13 @@ let test_start_comment _ =
   assert_equal true @@ Comment.start_comment "    (* This is a comment *)";
   assert_equal false @@ Comment.start_comment " asdf   (* This is a comment *)"
 
-let comment1:Comment.comment = { content = "(*This is a comment *)";sequence_num = 0}
+let comment_1:Comment.comment = {Comment.content="(*This is a comment *)"; sequence_num=0}
+let get_comment_1:(Comment.comment*string) = Comment.get_comment "This is a comment *)" 1 "(*" 0
 
 let test_get_comment _ =
- assert_equal (comment1, "") @@ Comment.get_comment "This is a comment *)" 1 "(*" 0
+ assert_equal (comment_1, "") @@ get_comment_1;
+ assert_equal 0 @@ Comment.get_sequence_num (fst get_comment_1);
+ assert_equal "(*This is a comment *)" @@ Comment.get_content (fst get_comment_1)
 
 let comment_tests = "Regular Expression Tests" >: test_list [
  "start_comment" >:: test_start_comment;
