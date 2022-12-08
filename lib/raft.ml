@@ -38,5 +38,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
   = x + y
 
   all functions are defined by "let function_name..." (i.e. no anonymous functions)
+
+  let rec var = 5 (* this is currently identified as a function by the regular expression *)
    
 *)

@@ -16,12 +16,10 @@ type properties =
   fields: definition_fields
 }
 
-
-
 (* Regular Expression to match function declarations:
 ? "let[any number of spaces][function name][any number of spaces][at least one parameter]"
 *)
-(* let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; *)
+(* let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; *) (* todo: currently unused *)
 
 let get_function (file_contents: string): (properties * string) =
   failwith file_contents
