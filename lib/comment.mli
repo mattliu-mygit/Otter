@@ -1,4 +1,4 @@
-type comment
+type comment = {content: string; sequence_num: int}
 
 val comment_regexp: Str.regexp
 
