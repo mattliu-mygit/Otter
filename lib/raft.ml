@@ -71,8 +71,12 @@ let block_to_str (block: block_count) =
   | _ -> out_string
  in
  block_to_string' block ""
-  
 
+let output_file (file_name:string) (out_string:string): unit =
+ let out_channel = Out_channel.create file_name in
+ let _ = Out_channel.output_string out_channel out_string in
+ Out_channel.close out_channel
+  
 let process_args (indent_size:int option) (col_width:int option) (file_string:string): unit -> unit = 
  let indent_size = match indent_size with
   | Some i -> i
@@ -86,7 +90,7 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
  let out_string:string = block_to_str blocks in
  let _ = print_endline (string_of_int indent_size) in
  let _ = print_endline (string_of_int col_width) in
- fun () -> print_endline out_string
+ fun () -> output_file "out.ml" (String.concat ~sep:"\n" (List.rev (Str.split (Str.regexp "\n") out_string)))
   
 (* TODO : Assume they don't do the following 💀
   let sum = fun x y -> x + y
