@@ -19,13 +19,18 @@ type block_count = {
 }
 
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
- let _ = print_endline str in
+ (* let _ = print_endline str in *)
  if Comment.start_comment str then
+  (* let _ = print_endline "Found a comment" in *)
    let pos = search_forward Comment.comment_regexp str 0 in
-   let others = string_after str (pos+2) in
+   let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
+   let offset_amt = match offset_option with
+    | Some i -> i
+    | None -> 0 in
+   let others = string_after str (pos+offset_amt+2) in
    let block, rest = Comment.get_comment others 1 "(*" seq_num in
-           let _ = print_endline (string_of_int (Comment.get_sequence_num block)) in
-           let _ = print_endline (Comment.get_content block) in
+           (* let _ = print_endline (string_of_int (Comment.get_sequence_num block)) in
+           let _ = print_endline (Comment.get_content block) in *)
            str_to_block rest ({
              comments = block::acc.comments;
              (* functions = []; *)
@@ -77,11 +82,11 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
   | None -> 80 in
  (* let _ = str_to_block file_string {comments=[]} 0 in *)
  let blocks:block_count = str_to_block file_string {comments=[]} 0 in
+ let _ = print_endline ("L is "^(string_of_int (List.length blocks.comments))) in
  let out_string:string = block_to_str blocks in
  let _ = print_endline (string_of_int indent_size) in
  let _ = print_endline (string_of_int col_width) in
  fun () -> print_endline out_string
-    
   
 (* TODO : Assume they don't do the following 💀
   let sum = fun x y -> x + y
