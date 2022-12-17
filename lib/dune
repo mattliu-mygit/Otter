@@ -6,8 +6,8 @@
   (pps bisect_ppx ppx_deriving_yojson)))
 
 (executable
- (name Otter)
+ (name otter)
  (modules otter)
- (libraries core core_unix.command_unix yojson)
+ (libraries core core_unix.command_unix yojson otter_lib)
  (preprocess
   (pps ppx_let ppx_deriving_yojson)))
