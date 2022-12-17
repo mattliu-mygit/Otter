@@ -47,39 +47,6 @@ let new_func a b =
 *)
 
 (*
-  Parsing Functions:
-  1. (symbol 1) keyword "let" -> entered variable OR function definition
-  2. (symbol 2) name -> store
-  3. (symbol 3) "=" -> variable declaration (ignore)
-     (symbol 3) word(s) -> parse function parameters (below)
-*)
-
-(*
-  Parsing Function Parameters:
-  1. Create new list for parameters
-  LOOP START
-    1. If first character is "=" -> LOOP END
-    2. If first character is "("
-      -> Read characters until ":" or ")" and store as var_name (strip leading/trailing whitespaces)
-        -> If we reach ":"
-          -> Read characters until ")" and store as var_type (strip leading/trailing whitespaces)
-          -> Add  pair (var_name, var_type) to the parameter list
-        -> If we reach ")" -> 
-          -> Add pair (var_name, "UNKNOWN") to the parameter list
-      -> LOOP START
-    3. Else
-      -> Read characters until ":" or "=" and store as var_name (strip leading/trailing whitespaces)
-        -> If we reach ":"
-          -> Read characters until ")" and store as var_type (strip leading/trailing whitespaces)
-          -> Add pair (var_name, var_type) to the parameter list
-          -> LOOP END
-        -> If we reach "="
-          -> Add pair (var_name, "UNKNOWN") to the parameter list
-          -> LOOP END
-  LOOP END
-*)
-
-(*
   Parsing Function Body:
   
 *)

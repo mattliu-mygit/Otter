@@ -101,5 +101,14 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
   all functions are defined by "let function_name..." (i.e. no anonymous functions)
 
   let rec var = 5 (* this is currently identified as a function by the regular expression *)
+
+  assume all functions (not inner) end with ;;
+
+  assume no string literals with our regular expression patterns (i.e. "let", ";;", etc.)
+*)
+
+(*
+   
+": string): ((string * string) * string)"
    
 *)

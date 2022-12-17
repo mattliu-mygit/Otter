@@ -9,7 +9,7 @@ open Otter_lib
 let test_get_function _ = (* TODO: unimplemented function *)
   assert_equal 1 1
 
-let test_get_function_name _ =
+(* let test_get_function_name _ =
   assert_equal (Function.get_function_name "let function_name (function: string) (name: string): string = ") @@ 
   ({Function.name = "function_name"; parameters = []; return_type = "";
     recursive = false;},
@@ -51,12 +51,12 @@ let test_get_function_parameters _ =
   assert_equal (Function.get_parameters remainder2 fields2) @@
   ({Function.name = "function_name"; parameters = [("param3", "")]; return_type = "int";
   recursive = true;},
-  "param1")
+  "param1") *)
 
 let function_tests = "Function Tests" >: test_list [
     "Get Function" >:: test_get_function;
-    "Get Function Name" >:: test_get_function_name;
-    "Get Parameters" >:: test_get_function_parameters;
+    (* "Get Function Name" >:: test_get_function_name;
+    "Get Parameters" >:: test_get_function_parameters; *)
   ]
 
 (** 
