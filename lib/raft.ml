@@ -108,11 +108,3 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
 
   assume no string literals with our regular expression patterns (i.e. "let", ";;", etc.)
 *)
-
-(*
-   
-"let function_name (str: (string * int) * double * (double * int)): ((string * string) * string) = remainder"
-"(string)): ((string * string) * string)"   
- 012345678901234567890123456789012345678901
- 0         1         2         3         4
-*)
