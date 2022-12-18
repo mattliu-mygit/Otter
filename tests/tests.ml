@@ -6,15 +6,43 @@ open Otter_lib
     Function Tests   
 **)
 
-let test_get_function _ = (* TODO: unimplemented function *)
-  assert_equal 1 1
-
 let init_fields = {
   Function.name = "";
   parameters = [];
   return_type = "";
   recursive = false;
 }
+
+let test_get_function _ =
+  assert_equal (Function.get_function "let outer_function x =   \n      let inner_function y =\n        let a = 1 in\n        let b = 2 in\n        let c = 3 in\n        y + a + b + c\n      in inner_function x\n    ;;\nlet ignore x = x;;" 0 0) @@ (
+    {
+      Function.body = "let inner_function y =\n        let a = 1 in\n        let b = 2 in\n        let c = 3 in\n        y + a + b + c\n      in inner_function x";
+      fields =
+        {
+          name = "outer_function";
+          parameters = [("x", "")];
+          return_type = "";
+          recursive = false;
+        };
+      nesting = 0;
+      sequence = 0;
+    }
+  , "let ignore x = x;;");
+
+  assert_equal (Function.get_function "let inner_function y =\n      let a = 1 in\n      let b = 2 in\n      let c = 3 in\n      y + a + b + c\n    in inner_function x" 1 0) @@ (
+    {
+      Function.body = "let a = 1 in\n      let b = 2 in\n      let c = 3 in\n      y + a + b + c";
+      fields =
+        {
+          name = "inner_function";
+          parameters = [("y", "")];
+          return_type = "";
+          recursive = false;
+        };
+      nesting = 1;
+      sequence = 0;
+    }   
+  , "inner_function x")
 
 let test_get_function_name _ =
   let a = {Function.body = "let function_name (function: string) (name: string): string = ";
@@ -155,10 +183,165 @@ let test_get_function_parameters _ =
     recursive = false;
   };})
 
+let test_get_type _ =
+  assert_equal (Function.get_type " string * int * bool) param2 (param3: int): ((string * string) * string) = remainder" true) @@ ("string * int * bool", "param2 (param3: int): ((string * string) * string) = remainder");
+  assert_equal (Function.get_type " int): ((string * string) * string) = remainder" true) @@ ("int", ": ((string * string) * string) = remainder");
+  assert_equal (Function.get_type "((string * string) * string) = remainder" false) @@ ("((string * string) * string)", "remainder")
+
+let test_get_paranthesized_parameter _ =
+  assert_equal (Function.get_parenthesized_parameter "(str: (string * int) * double * (double * int)): ((string * string) * string) = remainder") @@ (("str","(string * int) * double * (double * int)"),": ((string * string) * string) = remainder");
+  assert_equal (Function.get_parenthesized_parameter "(str: (string list * int list) * bool list)\t\r: ((string * string) * string) = remainder") @@ (("str","(string list * int list) * bool list"),": ((string * string) * string) = remainder");
+  assert_equal (Function.get_parenthesized_parameter "(str) = remainder") @@ (("str", ""), "remainder")
+
+let test_get_body_outer _ =
+  let a = {
+    Function.body = "let remove (k: key) (map: t): t * value option =\n    let rec remove_helper (map: t): t =\n      (* ;; *)match map with | [] -> [\";;\"]\n      | (k_, v_) :: tail ->\n        if (Key.compare k_ k) = 0 then\n          tail\n        else (k_, v_) :: remove_helper tail\n    in\n      match lookup k map with\n      | None -> (map, None)\n      | Some (v) -> (remove_helper map, Some v)\n  ;;";
+             fields = init_fields;
+             nesting = 0;
+             sequence = 0
+  }
+  |> Function.get_function_name |> Function.get_parameters in
+  assert_equal (Function.get_body_outer a) @@ (
+    {
+      Function.body = "let rec remove_helper (map: t): t =\n      (* ;; *)match map with | [] -> [\";;\"]\n      | (k_, v_) :: tail ->\n        if (Key.compare k_ k) = 0 then\n          tail\n        else (k_, v_) :: remove_helper tail\n    in\n      match lookup k map with\n      | None -> (map, None)\n      | Some (v) -> (remove_helper map, Some v)";
+      fields =
+        {
+          name = "remove";
+          parameters = [("k", "key"); ("map", "t")];
+          return_type = "t * value option";
+          recursive = false;
+        };
+      nesting = 0;
+      sequence = 0;
+    }
+  , "");
+
+  let b = {
+    Function.body = "let sample_function param1 = param1;;\nlet function2 param2 = param2;;";
+             fields = init_fields;
+             nesting = 0;
+             sequence = 0
+  }
+  |> Function.get_function_name |> Function.get_parameters in
+  assert_equal (Function.get_body_outer b) @@ (
+    {
+      Function.body = "param1";
+      fields =
+        {
+          name = "sample_function";
+          parameters = [("param1", "")];
+          return_type = "";
+          recursive = false;
+        };
+      nesting = 0;
+      sequence = 0;
+    }   
+  , "let function2 param2 = param2;;")
+
+let test_get_body_inner _ =
+  let a = {
+    Function.body = "let rec remove_helper (map: t): t =\n      (* let in *)match map with | [] -> [\"let in\"]\n      | (k_, v_) :: tail ->\n        if (Key.compare k_ k) = 0 then\n          tail\n        else (k_, v_) :: remove_helper tail\n    in\n      match lookup k map with\n      | None -> (map, None)\n      | Some (v) -> (remove_helper map, Some v)\n  ";
+             fields = init_fields;
+             nesting = 1;
+             sequence = 0
+  }
+  |> Function.get_function_name |> Function.get_parameters in
+  assert_equal (Function.get_body_inner a) @@ (
+    {
+      Function.body = "(* let in *)match map with | [] -> [\"let in\"]\n      | (k_, v_) :: tail ->\n        if (Key.compare k_ k) = 0 then\n          tail\n        else (k_, v_) :: remove_helper tail";
+      fields =
+        {
+          name = "remove_helper";
+          parameters = [("map", "t")];
+          return_type = "t";
+          recursive = true;
+        };
+      nesting = 1;
+      sequence = 0;
+    }
+  , "match lookup k map with\n      | None -> (map, None)\n      | Some (v) -> (remove_helper map, Some v)\n  ");
+
+  let b = {
+    Function.body = "let inner_function y =\n      let a = 1 in\n      let b = 2 in\n      let c = 3 in\n      y + a + b + c\n    in inner_function x";
+             fields = init_fields;
+             nesting = 1;
+             sequence = 0
+  }
+  |> Function.get_function_name |> Function.get_parameters in
+  assert_equal (Function.get_body_inner b) @@ (
+    {
+      Function.body = "let a = 1 in\n      let b = 2 in\n      let c = 3 in\n      y + a + b + c";
+      fields =
+        {
+          name = "inner_function";
+          parameters = [("y", "")];
+          return_type = "";
+          recursive = false;
+        };
+      nesting = 1;
+      sequence = 0;
+    }   
+  , "inner_function x")
+
+let test_get_body _ =
+  let a = {
+    Function.body = "let outer_function x =   \n      let inner_function y =\n        let a = 1 in\n        let b = 2 in\n        let c = 3 in\n        y + a + b + c\n      in inner_function x\n    ;;\nlet ignore x = x;;";
+             fields = init_fields;
+             nesting = 0;
+             sequence = 0
+  }
+  |> Function.get_function_name |> Function.get_parameters in
+  assert_equal (Function.get_body a) @@ (
+    {
+      Function.body = "let inner_function y =\n        let a = 1 in\n        let b = 2 in\n        let c = 3 in\n        y + a + b + c\n      in inner_function x";
+      fields =
+        {
+          name = "outer_function";
+          parameters = [("x", "")];
+          return_type = "";
+          recursive = false;
+        };
+      nesting = 0;
+      sequence = 0;
+    }
+  , "let ignore x = x;;");
+
+  let b = {
+    Function.body = "let inner_function y =\n        let a = 1 in\n        let b = 2 in\n        let c = 3 in\n        y + a + b + c\n      in inner_function x";
+             fields = init_fields;
+             nesting = 1;
+             sequence = 0
+  }
+  |> Function.get_function_name |> Function.get_parameters in
+  assert_equal (Function.get_body b) @@ (
+    {
+      Function.body = "let a = 1 in\n        let b = 2 in\n        let c = 3 in\n        y + a + b + c";
+      fields =
+        {
+          name = "inner_function";
+          parameters = [("y", "")];
+          return_type = "";
+          recursive = false;
+        };
+      nesting = 1;
+      sequence = 0;
+    }
+  , "inner_function x")
+
+let test_get_closed_comment_index _ =
+  assert_equal (Function.get_closed_comment_index "(* hello *)" 0) @@ 11;
+  assert_equal (Function.get_closed_comment_index "(* (* *) *) (* *)" 2) @@ 11
+
 let function_tests = "Function Tests" >: test_list [
     "Get Function" >:: test_get_function;
     "Get Function Name" >:: test_get_function_name;
     "Get Parameters" >:: test_get_function_parameters;
+    "Get Type" >:: test_get_type;
+    "Get Parenthesized Parameter" >:: test_get_paranthesized_parameter;
+    "Get Body Outer" >:: test_get_body_outer;
+    "Get Body Inner" >:: test_get_body_inner;
+    "Get Body" >:: test_get_body;
+    "Get Closed Comment Index" >:: test_get_closed_comment_index;
   ]
 
 (** 

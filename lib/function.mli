@@ -24,8 +24,10 @@ val get_type: string -> bool -> string * string
 
 val get_parenthesized_parameter: string -> (string * string) * string
 
-val get_body_outer: string -> function_ -> (function_ * string)
+val get_body_outer: function_ -> (function_ * string)
 
-val get_body_inner: string -> function_ -> (function_ * string)
+val get_body_inner: function_ -> (function_ * string)
 
 val get_body: function_ -> (function_ * string)
+
+val get_closed_comment_index: string -> int -> int
