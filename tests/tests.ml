@@ -9,54 +9,156 @@ open Otter_lib
 let test_get_function _ = (* TODO: unimplemented function *)
   assert_equal 1 1
 
-(* let test_get_function_name _ =
-  assert_equal (Function.get_function_name "let function_name (function: string) (name: string): string = ") @@ 
-  ({Function.name = "function_name"; parameters = []; return_type = "";
-    recursive = false;},
-    "(function: string) (name: string): string = ");
+let init_fields = {
+  Function.name = "";
+  parameters = [];
+  return_type = "";
+  recursive = false;
+}
 
-  assert_equal (Function.get_function_name "let rec function_name (function: string): string = ") @@ 
-  ({Function.name = "function_name"; parameters = []; return_type = "";
-    recursive = true;},
-    "(function: string): string = ");
+let test_get_function_name _ =
+  let a = {Function.body = "let function_name (function: string) (name: string): string = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  assert_equal (Function.get_function_name a) @@
+  ({Function.body = "(function: string) (name: string): string = ";
+    nesting = 0; sequence = 0;
+    fields = {
+      Function.name = "function_name";
+      parameters = [];
+      return_type = "";
+      recursive = false;
+    };});
 
-  assert_equal (Function.get_function_name "    let function (param): int = ") @@
-  ({Function.name = "function"; parameters = []; return_type = "";
-    recursive = false;},
-    "(param): int = ");
+  let b = {Function.body = "let rec function_name (function: string): string = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  assert_equal (Function.get_function_name b) @@
+  ({Function.body = "(function: string): string = ";
+    nesting = 0; sequence = 0;
+    fields = {
+      Function.name = "function_name";
+      parameters = [];
+      return_type = "";
+      recursive = true;
+    };});
 
-  assert_equal (Function.get_function_name "let nonrec function_name (function: string): string = ") @@
-  ({Function.name = "function_name"; parameters = []; return_type = "";
-    recursive = false;},
-    "(function: string): string = ");
+  let c = {Function.body = "    let function' (param): int = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  assert_equal (Function.get_function_name c) @@
+  ({Function.body = "(param): int = ";
+    nesting = 0; sequence = 0;
+    fields = {
+      Function.name = "function'";
+      parameters = [];
+      return_type = "";
+      recursive = false;
+    };});
 
-  assert_equal (Function.get_function_name "    let    rec   fun_name    ( param1 :   int) = ") @@
-  ({Function.name = "fun_name"; parameters = []; return_type = "";
-    recursive = true;},
-    "( param1 :   int) = ");
+  let d = {Function.body = "let nonrec function_name' (function: string): string = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  assert_equal (Function.get_function_name d) @@
+  ({Function.body = "(function: string): string = ";
+    nesting = 0; sequence = 0;
+    fields = {
+      Function.name = "function_name'";
+      parameters = [];
+      return_type = "";
+      recursive = false;
+    };});
 
-  assert_equal (Function.get_function_name "    let    nonrec   fun_name    ( param1 :   int) = ") @@
-  ({Function.name = "fun_name"; parameters = []; return_type = "";
-    recursive = false;},
-    "( param1 :   int) = ")
+  let e = {Function.body = "    let    rec   fun_name    ( param1 :   int) = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  assert_equal (Function.get_function_name e) @@
+  ({Function.body = "( param1 :   int) = ";
+    nesting = 0; sequence = 0;
+    fields = {
+      Function.name = "fun_name";
+      parameters = [];
+      return_type = "";
+      recursive = true;
+    };});
+
+  let f = {Function.body = "    let    nonrec   fun_name    ( param1 :   int) = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  assert_equal (Function.get_function_name f) @@
+  ({Function.body = "( param1 :   int) = ";
+    nesting = 0; sequence = 0;
+    fields = {
+      Function.name = "fun_name";
+      parameters = [];
+      return_type = "";
+      recursive = false;
+    };})
 
 let test_get_function_parameters _ =
-  let fields1, remainder1 = Function.get_function_name "let function_name    (   param1  :  int  ) (   param2:   int   )   param3  :  int   =    param1" in
-  assert_equal (Function.get_parameters remainder1 fields1) @@
-  ({Function.name = "function_name"; parameters = [("param1", "int");("param2", "int");("param3", "")]; return_type = "int";
-  recursive = false;},
-  "param1");
+  let a = {Function.body = "    let    nonrec   fun_name    ( param1 :   int) = ";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  let a' = Function.get_function_name a in
+  assert_equal (Function.get_parameters a') @@
+  ({Function.body = "";
+  nesting = 0; sequence = 0;
+  fields = {
+    Function.name = "fun_name";
+    parameters = [("param1", "int")];
+    return_type = "";
+    recursive = false;
+  };});
 
-  let fields2, remainder2 = Function.get_function_name "let rec function_name     param3  :  int   =    param1" in
-  assert_equal (Function.get_parameters remainder2 fields2) @@
-  ({Function.name = "function_name"; parameters = [("param3", "")]; return_type = "int";
-  recursive = true;},
-  "param1") *)
+  let b = {Function.body = "let rec function_name     param3  :  int   =    body1";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  let b' = Function.get_function_name b in
+  assert_equal (Function.get_parameters b') @@
+  ({Function.body = "body1";
+  nesting = 0; sequence = 0;
+  fields = {
+    Function.name = "function_name";
+    parameters = [("param3", "")];
+    return_type = "int";
+    recursive = true;
+  };});
+
+  let c = {Function.body = "let function_name (str: (string * int) * double * (double * int)): ((string * string) * string) = remainder";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  let c' = Function.get_function_name c in
+  assert_equal (Function.get_parameters c') @@
+  ({Function.body = "remainder";
+  nesting = 0; sequence = 0;
+  fields = {
+    Function.name = "function_name";
+    parameters = [("str", "(string * int) * double * (double * int)")];
+    return_type = "((string * string) * string)";
+    recursive = false;
+  };});
+
+  let d = {Function.body = "let rec function_name (str: string * int * bool) param2 (param3: int): ((string * string) * string) = remainder";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  let d' = Function.get_function_name d in
+  assert_equal (Function.get_parameters d') @@
+  ({Function.body = "remainder";
+  nesting = 0; sequence = 0;
+  fields = {
+    Function.name = "function_name";
+    parameters = [("str", "string * int * bool");("param2", "");("param3", "int")];
+    return_type = "((string * string) * string)";
+    recursive = true;
+  };});
+
+  let e = {Function.body = "let output_file (file_name:string) (out_string:string): unit =\n  let out_channel = Out_channel.create file_name in\n    let _ = Out_channel.output_string out_channel out_string in\n    Out_channel.close out_channel";
+  fields = init_fields; nesting = 0; sequence = 0} in
+  let e' = Function.get_function_name e in
+  assert_equal (Function.get_parameters e') @@
+  ({Function.body = "let out_channel = Out_channel.create file_name in\n    let _ = Out_channel.output_string out_channel out_string in\n    Out_channel.close out_channel";
+  nesting = 0; sequence = 0;
+  fields = {
+    Function.name = "output_file";
+    parameters = [("file_name", "string");("out_string","string")];
+    return_type = "unit";
+    recursive = false;
+  };})
 
 let function_tests = "Function Tests" >: test_list [
     "Get Function" >:: test_get_function;
-    (* "Get Function Name" >:: test_get_function_name;
-    "Get Parameters" >:: test_get_function_parameters; *)
+    "Get Function Name" >:: test_get_function_name;
+    "Get Parameters" >:: test_get_function_parameters;
   ]
 
 (** 

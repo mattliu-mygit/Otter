@@ -8,7 +8,6 @@ type definition_fields =
 
 type function_ =
 {
-  content: string; (* full function content *)
   body: string; (* body of the function *)
   fields: definition_fields;
   nesting: int; (* the degree of nesting for this block, default is 0 *)
@@ -20,6 +19,10 @@ val get_function: string -> int -> int -> (function_ * string)
 val get_function_name: function_ -> function_
 
 val get_parameters: function_ -> function_
+
+val get_type: string -> bool -> string * string
+
+val get_parenthesized_parameter: string -> (string * string) * string
 
 val get_body_outer: string -> function_ -> (function_ * string)
 

@@ -10,7 +10,6 @@ type definition_fields =
 
 type function_ =
 {
-  content: string; (* full function content *)
   body: string; (* body of the function *)
   fields: definition_fields;
   nesting: int; (* the degree of nesting for this block, default is 0 *)
@@ -28,7 +27,7 @@ let in_regexp = Str.regexp "[^A-Za-z0-9]?in[^A-Za-z0-9]+";;
 (* let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; *) (* todo: currently unused *)
 
 let get_function_name (init: function_): function_ =
-  let no_leading_whitespace = String.lstrip init.content in
+  let no_leading_whitespace = String.lstrip init.body in
   let length = String.length no_leading_whitespace in
   let sanitized = String.sub no_leading_whitespace ~pos:4 ~len:(length - 4) |> String.lstrip in (* Remove leading whitespaces and "let " *)
   let sanitized_length = String.length sanitized in
@@ -49,8 +48,7 @@ let get_function_name (init: function_): function_ =
       recursive = String.(first_token = "rec");
     } in
     {
-      content = String.lstrip remainder;
-      body = init.body;
+      body = String.lstrip remainder;
       fields = fields;
       nesting = init.nesting;
       sequence = init.sequence;
@@ -63,8 +61,7 @@ let get_function_name (init: function_): function_ =
       recursive = false;
     } in
     {
-      content = String.lstrip remainder;
-      body = init.body;
+      body = String.lstrip remainder;
       fields = fields;
       nesting = init.nesting;
       sequence = init.sequence;
@@ -75,9 +72,25 @@ let get_function_name (init: function_): function_ =
 *)
 let ident_start_regexp = Str.regexp {|[a-z_]|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
 let ident_end_regexp = Str.regexp {|[^A-Za-z0-9_']|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
-let type_start_regexp = Str.regexp {|[a-z_(]|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
-let type_end_regexp = Str.regexp {|[^* A-Za-z0-9_')]|};; (* https://v2.ocaml.org/manual/lex.html#sss:lex:identifiers *)
 
+let get_type (str: string) (param: bool): (string * string) =
+  let length = String.length str in
+  let rec get_type_rec (num_open: int) (pos: int): (string * string) =
+    match String.make 1 str.[pos] with
+    | "(" -> get_type_rec (num_open + 1) (pos + 1)
+    | ")" ->
+      if num_open = 1 && param then
+        let type_name = String.sub str ~pos:0 ~len:pos in
+        let remainder = String.sub str ~pos:(pos + 1) ~len:(length - pos - 1) in
+        (String.strip type_name, String.lstrip remainder)
+      else get_type_rec (num_open - 1) (pos + 1)
+    | "=" ->
+      let type_name = String.sub str ~pos:0 ~len:pos in
+      let remainder = String.sub str ~pos:(pos + 1) ~len:(length - pos - 1) in
+      (String.strip type_name, String.lstrip remainder)
+    | _ -> get_type_rec num_open (pos + 1)
+  in get_type_rec 1 0
+;;
 let get_parenthesized_parameter (str: string): (string * string) * string =
   let length = String.length str in
   let param_name_start = Str.search_forward ident_start_regexp str 1 in
@@ -89,23 +102,12 @@ let get_parenthesized_parameter (str: string): (string * string) * string =
   let param_name_remainder_length = String.length param_name_remainder in
   match param_name_remainder.[0] with
   | ':' -> (* handle type *)
-    let type_name_start = Str.search_forward type_start_regexp param_name_remainder 1 in
-    let type_name_end = Str.search_forward type_end_regexp param_name_remainder (type_name_start + 1) in
-    let type_name = String.rstrip @@ String.sub param_name_remainder ~pos:type_name_start ~len:(type_name_end - type_name_start - 1) in
-    let remainder = String.lstrip @@ String.sub param_name_remainder ~pos:(type_name_end + 1) ~len:(param_name_remainder_length - type_name_end - 1) in
+    let (type_name, remainder) = get_type (String.sub param_name_remainder ~pos:1 ~len:(param_name_remainder_length - 1)) true in
     ((variable_name, type_name), remainder)
   | ')' -> (* update accum and make recursive call *)
     let remainder = String.lstrip @@ String.sub param_name_remainder ~pos:1 ~len:(param_name_remainder_length - 1) in
     ((variable_name, ""), remainder)
   | c -> failwith @@ "unreachable1" ^ (String.make 1 c)  (* ! The only valid characters are : and ), any other characters will be considered invalid ! *)
-;;
-
-let get_type (str: string): (string option * string) =
-  match str.[0] with
-  | ':' -> 
-
-
-  | _ -> (None, str)
 ;;
 
 let get_parameters (init: function_): function_ =
@@ -118,7 +120,6 @@ let get_parameters (init: function_): function_ =
         recursive = init.fields.recursive;
       } in
       {
-        content = "";
         body = init.body;
         fields = fields;
         nesting = init.nesting;
@@ -139,25 +140,29 @@ let get_parameters (init: function_): function_ =
           recursive = init.fields.recursive;
         } in
         {
-          content = String.lstrip remainder; 
-          body = init.body;
+          body = String.lstrip remainder; 
           fields = fields;
           nesting = init.nesting;
           sequence = init.sequence;
         }
         end
       | '(' -> (* possibly a typed parameter *)
-        begin
-       
-        end
+        let (param, remainder) = get_parenthesized_parameter no_leading_whitespace in
+        get_parameters_rec remainder (accum @ [param]) return_type
       | ':' -> (* return type *)
-        begin
-        let type_name_start = Str.search_forward ident_start_regexp no_leading_whitespace 1 in
-        let type_name_end = String.index_exn no_leading_whitespace '=' in
-        let type_name = String.strip @@ String.sub no_leading_whitespace ~pos:type_name_start ~len:(type_name_end - type_name_start) in
-        let remainder = String.lstrip @@ String.sub no_leading_whitespace ~pos:type_name_end ~len:(length - type_name_end) in
-        get_parameters_rec remainder accum type_name
-        end
+        let (return_type, remainder) = get_type (String.chop_prefix_exn no_leading_whitespace ~prefix:":") false in
+        let fields = {
+          name = init.fields.name;
+          parameters = accum;
+          return_type = return_type;
+          recursive = init.fields.recursive;
+        } in
+        {
+          body = String.lstrip remainder; 
+          fields = fields;
+          nesting = init.nesting;
+          sequence = init.sequence;
+        }
       | _ -> (* parameter name *)
         begin
         let param_name_start = Str.search_forward ident_start_regexp no_leading_whitespace 0 in
@@ -166,7 +171,7 @@ let get_parameters (init: function_): function_ =
         let remainder = String.lstrip (String.sub no_leading_whitespace ~pos:param_name_end ~len:(length - param_name_end)) in
         get_parameters_rec remainder (accum @ [(variable_name, "")]) return_type
         end
-  in get_parameters_rec init.content [] ""
+  in get_parameters_rec init.body [] ""
 ;;
 
 (*
@@ -183,7 +188,6 @@ let get_body_outer (file_contents: string) (init: function_): (function_ * strin
       recursive = init.fields.recursive;
     } in
     let result = {
-      content = body;
       body = body;
       fields = fields;
       nesting = init.nesting;
@@ -198,7 +202,6 @@ let get_body_outer (file_contents: string) (init: function_): (function_ * strin
       recursive = init.fields.recursive;
     } in
     let result = {
-      content = body;
       body = body;
       fields = fields;
       nesting = init.nesting;
@@ -269,8 +272,7 @@ let get_body_inner (file_contents: string) (init: function_): (function_ * strin
   let end_index = get_body_end 1 0 in
   let remainder_length = (String.length file_contents) - end_index in
   ({
-    content = String.sub file_contents ~pos:0 ~len:end_index;
-    body = "";
+    body = String.sub file_contents ~pos:0 ~len:end_index;
     fields = init.fields;
     nesting = init.nesting;
     sequence = init.sequence;
@@ -278,14 +280,13 @@ let get_body_inner (file_contents: string) (init: function_): (function_ * strin
 ;;
 
 let get_body (init: function_): (function_ * string)=
-  if init.nesting = 0 then get_body_outer init.content init (* top-level function -> look for ;; *)
-  else get_body_inner init.content init (* nested function -> match let-in pairs *)
+  if init.nesting = 0 then get_body_outer init.body init (* top-level function -> look for ;; *)
+  else get_body_inner init.body init (* nested function -> match let-in pairs *)
 ;;
 
 let get_function (file_contents: string) (nesting: int) (sequence: int): (function_ * string) =
   let init = {
-    content = file_contents;
-    body = "";
+    body = file_contents;
     fields = {
       name = "";
       parameters = [];
