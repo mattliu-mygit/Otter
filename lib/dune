@@ -1,6 +1,6 @@
 (library
  (name otter_lib)
- (modules raft infraction function comment variable block unknown)
+ (modules raft infraction function comment variable unknown)
  (libraries core yojson str)
  (preprocess
   (pps bisect_ppx ppx_deriving_yojson)))

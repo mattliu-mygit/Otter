@@ -451,11 +451,48 @@ let comment_tests = "Comment Tests" >: test_list [
  "get_content" >:: test_get_content;
 ]
 
+let test_stb_comments_only _ =
+  assert_equal {
+   Raft.comments=[{content="(*This is a comment*)";sequence_num=0}]; functions=[]
+  } @@ Raft.str_to_block "(*This is a comment*)" {
+   Raft.comments=[]; functions=[]
+  } 0;
+  assert_equal {
+   Raft.comments=[
+  {Comment.content = "(*This is a comment*)"; sequence_num = 0};{Comment.content = "(* This is another comment *)";
+  sequence_num = 1}]; functions=[]
+  } @@ Raft.str_to_block "(*This is a comment*) (* This is another comment *)" {
+   Raft.comments=[]; functions=[]
+  } 0;
+  assert_equal {
+   Raft.comments=[
+  {Comment.content = "(*This is a comment*)"; sequence_num = 0};{Comment.content = "(* This is another comment *)";
+  sequence_num = 1}]; functions=[]
+  } @@ Raft.str_to_block "(*This is a comment*) \n(* This is another comment *)" {
+   Raft.comments=[]; functions=[]
+  } 0
+
+let test_bts_comments_only _ = 
+  assert_equal "(*This is a comment*)\n" @@ Raft.block_to_str {
+   Raft.comments=[{content="(*This is a comment*)";sequence_num=0}]; functions=[]
+  } 2 80;
+  assert_equal "(*This is a comment*)\n(* This is another comment *)\n" @@ Raft.block_to_str {
+   Raft.comments=[
+  {Comment.content = "(*This is a comment*)"; sequence_num = 0};{Comment.content = "(* This is another comment *)";
+  sequence_num = 1}]; functions=[]
+  } 2 80
+
+let raft_tests = "Raft Tests" >: test_list [
+ "str_to_block comments only" >:: test_stb_comments_only;
+ "block_to_str comments only" >:: test_bts_comments_only;
+]
+
 let series = "Otter Tests" >::: [
     function_tests;
     variable_tests;
     regex_tests;
     comment_tests;
+    raft_tests;
   ]
 let () =
   run_test_tt_main series

@@ -14,6 +14,8 @@ type function_ =
   sequence: int; (* sequence number in the file *)
 }
 
+val regexp: Str.regexp
+
 val get_function: string -> int -> int -> (function_ * string)
 
 val get_function_name: function_ -> function_

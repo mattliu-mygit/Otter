@@ -14,7 +14,7 @@ end *)
 
 type block_count = {
  comments: Comment.comment list;
- (* functions: Function.function_ list; *)
+ functions: Function.function_ list;
  (* unknowns:Unknown.t list; *)
 }
 
@@ -29,14 +29,31 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
     | None -> 0 in
    let others = string_after str (pos+offset_amt+2) in
    let block, rest = Comment.get_comment others 1 "(*" seq_num in
-           (* let _ = print_endline (string_of_int (Comment.get_sequence_num block)) in
-           let _ = print_endline (Comment.get_content block) in *)
-           str_to_block rest ({
-             comments = block::acc.comments;
-             (* functions = []; *)
-             (* unknowns = acc.unknowns; *)
-           }) (seq_num + 1)
- else acc
+    (* let _ = print_endline (string_of_int (Comment.get_sequence_num block)) in
+    let _ = print_endline (Comment.get_content block) in *)
+    str_to_block rest ({
+      comments = acc.comments @ [block];
+      functions = [];
+      (* unknowns = acc.unknowns; *)
+    }) (seq_num + 1)
+ else if Str.string_match Function.regexp str 0 then
+  (* let _ = print_endline "Found a function" in *)
+  let block, rest = Function.get_function str 0 seq_num in
+  str_to_block rest ({
+    comments = acc.comments;
+    functions = acc.functions @ [block];
+    (* unknowns = acc.unknowns; *)
+  }) (seq_num + 1)
+ else
+  (* let _ = print_endline "Found an unknown" in *)
+  acc
+ (* let _ = print_endline "Found an unknown" in *)
+ (* let block, rest = Unknown.get_unknown str in *)
+ (* str_to_block rest ({
+   comments = acc.comments;
+   functions = acc.functions;
+   unknowns = acc.unknowns @ [block];
+ }) *)
 
  (* 
  check if there are any more blocks remaining in any value in the given block count
@@ -52,7 +69,7 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
      | [] -> raise (Failure "Not Found")
      | h :: t -> if x = h then 0 else 1 + find x t in
  let rec block_to_string' (block: block_count) (out_string: string) (indent_level:int) =
-  let lengths: int list = List.fold_left [0] ~f:(fun acc x -> 
+  let lengths: int list = List.fold_left [0;1] ~f:(fun acc x -> 
    match x with
    | 0 -> 
     if List.length block.comments > 0 then
@@ -60,19 +77,25 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
      let next_block_string = ((gen_whitespaces (indent_size * indent_level) "") ^ (Comment.get_content next_block)) in
      (String.length next_block_string)::acc
     else -1::acc
+   | 1 -> 
+    if List.length block.functions > 0 then
+     let next_block = List.hd_exn block.functions in
+     let next_block_string = ((gen_whitespaces (indent_size * (indent_level+next_block.nesting)) "") ^ "TODO ADD FUNCTION STUFF") in
+     (String.length next_block_string)::acc
+    else -1::acc
    | _ -> -1::acc
    ) ~init:[] in
   let min_val:int = List.fold_left lengths ~init:(List.hd_exn lengths) ~f:(fun acc x -> if x < acc then x else acc) in
   let max_val:int = List.fold_left lengths ~init:(List.hd_exn lengths) ~f:(fun acc x -> if x > acc then x else acc) in
-  let min_index:int = find min_val lengths in
   if max_val = -1 then out_string
   else
-  match min_index with
-  | 0 -> 
-   let next_block = List.hd_exn block.comments in
-   let next_block_string = Comment.get_content next_block in
-   block_to_string' {comments = List.tl_exn block.comments} (out_string ^ next_block_string ^ "\n") indent_level
-  | _ -> out_string
+   let min_index:int = find min_val lengths in
+   match min_index with
+   | 0 -> 
+    let next_block = List.hd_exn block.comments in
+    let next_block_string = Comment.get_content next_block in
+    block_to_string' {comments = List.tl_exn block.comments; functions = block.functions} (out_string ^ next_block_string ^ "\n") indent_level
+   | _ -> out_string
  in
  block_to_string' block "" 0
 
@@ -89,10 +112,10 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
   | Some i -> i
   | None -> 80 in
  (* let _ = str_to_block file_string {comments=[]} 0 in *)
- let blocks:block_count = str_to_block file_string {comments=[]} 0 in
+ let blocks:block_count = str_to_block file_string {comments=[]; functions=[]} 0 in
  let _ = print_endline ("L is "^(string_of_int (List.length blocks.comments))) in
  let out_string:string = block_to_str blocks indent_size col_width in
- fun () -> output_file "out.ml" (String.concat ~sep:"\n" (List.rev (Str.split (Str.regexp "\n") out_string)))
+ fun () -> output_file "out.ml" out_string
   
 (* TODO : Assume they don't do the following 💀
   let sum = fun x y -> x + y

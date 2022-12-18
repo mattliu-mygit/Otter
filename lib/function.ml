@@ -24,7 +24,7 @@ let in_regexp = Str.regexp "[^A-Za-z0-9]?in[^A-Za-z0-9]+";;
 (* Regular Expression to match function declarations:
 ? "let[any number of spaces][function name][any number of spaces][at least one parameter]"
 *)
-(* let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; *) (* todo: currently unused *)
+let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; (* todo: currently unused *)
 
 let get_function_name (init: function_): function_ =
   let no_leading_whitespace = String.lstrip init.body in

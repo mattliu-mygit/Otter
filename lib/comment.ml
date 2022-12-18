@@ -32,6 +32,3 @@ let rec get_comment (str:string) (num_open: int) (acc:string) (seq_num:int): (co
 let get_sequence_num (comm: comment) = comm.sequence_num
 
 let get_content (comm: comment) = comm.content
-
-let delete_me (c: comment): string =
-  c.content ^ (string_of_int c.sequence_num)

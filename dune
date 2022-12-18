@@ -4,8 +4,6 @@
   lib/dune
   lib/raft.mli
   lib/raft.ml
-  lib/block.mli
-  lib/block.ml
   lib/comment.mli
   lib/comment.ml
   lib/unknown.mli
