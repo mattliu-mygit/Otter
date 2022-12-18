@@ -42,18 +42,22 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
  check if there are any more blocks remaining in any value in the given block count
  if there are, then process the block with the next smallest sequence number and add it to the out string
   *)
-let block_to_str (block: block_count) =
+let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
+ let _ = print_endline (string_of_int col_width) in
+ let rec gen_whitespaces (n:int) (out_string:string): string =
+  if n = 0 then out_string
+  else gen_whitespaces (n-1) (out_string ^ " ") in
  let rec find x lst =
      match lst with
      | [] -> raise (Failure "Not Found")
      | h :: t -> if x = h then 0 else 1 + find x t in
- let rec block_to_string' (block: block_count) (out_string: string) =
+ let rec block_to_string' (block: block_count) (out_string: string) (indent_level:int) =
   let lengths: int list = List.fold_left [0] ~f:(fun acc x -> 
    match x with
    | 0 -> 
     if List.length block.comments > 0 then
      let next_block = List.hd_exn block.comments in
-     let next_block_string = Comment.get_content next_block in
+     let next_block_string = ((gen_whitespaces (indent_size * indent_level) "") ^ (Comment.get_content next_block)) in
      (String.length next_block_string)::acc
     else -1::acc
    | _ -> -1::acc
@@ -67,10 +71,10 @@ let block_to_str (block: block_count) =
   | 0 -> 
    let next_block = List.hd_exn block.comments in
    let next_block_string = Comment.get_content next_block in
-   block_to_string' {comments = List.tl_exn block.comments} (out_string ^ next_block_string ^ "\n")
+   block_to_string' {comments = List.tl_exn block.comments} (out_string ^ next_block_string ^ "\n") indent_level
   | _ -> out_string
  in
- block_to_string' block ""
+ block_to_string' block "" 0
 
 let output_file (file_name:string) (out_string:string): unit =
  let out_channel = Out_channel.create file_name in
@@ -87,9 +91,7 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
  (* let _ = str_to_block file_string {comments=[]} 0 in *)
  let blocks:block_count = str_to_block file_string {comments=[]} 0 in
  let _ = print_endline ("L is "^(string_of_int (List.length blocks.comments))) in
- let out_string:string = block_to_str blocks in
- let _ = print_endline (string_of_int indent_size) in
- let _ = print_endline (string_of_int col_width) in
+ let out_string:string = block_to_str blocks indent_size col_width in
  fun () -> output_file "out.ml" (String.concat ~sep:"\n" (List.rev (Str.split (Str.regexp "\n") out_string)))
   
 (* TODO : Assume they don't do the following 💀
