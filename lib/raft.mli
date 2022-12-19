@@ -10,4 +10,4 @@ val block_to_str: block_count -> int -> int -> string
 
 val process_args: int option -> int option -> string -> unit -> unit
 
-val wrap_columns: string -> int -> string
+val wrap_columns: string -> int -> int -> int -> string
