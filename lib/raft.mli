@@ -1,6 +1,7 @@
 type block_count = {
  comments: Comment.comment list;
  functions: Function.function_ list;
+ unknowns: Unknown.unknown list;
 }
 
 val str_to_block: string -> block_count -> int -> block_count

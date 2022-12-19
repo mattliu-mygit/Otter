@@ -413,12 +413,12 @@ let test_start_comment _ =
   assert_equal true @@ Comment.start_comment "    (* This is a comment *)";
   assert_equal false @@ Comment.start_comment " asdf   (* This is a comment *)"
 
-let comment_1 = {Comment.content="(*This is a comment*)"; sequence_num=0}
-let comment_2 = {Comment.content="(*     This is a comment*)"; sequence_num=1}
-let comment_3 = {Comment.content="(* (*This is a comment*)*)"; sequence_num=2}
-let comment_4 = {Comment.content="(* (*This is a comment*)*)"; sequence_num=2}
-let comment_5 = {Comment.content="(* (*This is a comment*)*)"; sequence_num=2}
-let comment_6 = {Comment.content="(* (*This is a comment*)(*f*)*)"; sequence_num=2}
+let comment_1 = {Comment.content="(*This is a comment*)"; sequence=0}
+let comment_2 = {Comment.content="(*     This is a comment*)"; sequence=1}
+let comment_3 = {Comment.content="(* (*This is a comment*)*)"; sequence=2}
+let comment_4 = {Comment.content="(* (*This is a comment*)*)"; sequence=2}
+let comment_5 = {Comment.content="(* (*This is a comment*)*)"; sequence=2}
+let comment_6 = {Comment.content="(* (*This is a comment*)(*f*)*)"; sequence=2}
 let get_comment_1:(Comment.comment*string) = Comment.get_comment "This is a comment*)" 1 "(*" 0
 let get_comment_2:(Comment.comment*string) = Comment.get_comment "     This is a comment*)" 1 "(*" 1
 let get_comment_3:(Comment.comment*string) = Comment.get_comment " (*This is a comment*)*)" 1 "(*" 2
@@ -453,33 +453,33 @@ let comment_tests = "Comment Tests" >: test_list [
 
 let test_stb_comments_only _ =
   assert_equal {
-   Raft.comments=[{content="(*This is a comment*)";sequence_num=0}]; functions=[]
+   Raft.comments=[{content="(*This is a comment*)";sequence=0}]; functions=[]; unknowns=[]
   } @@ Raft.str_to_block "(*This is a comment*)" {
-   Raft.comments=[]; functions=[]
+   Raft.comments=[]; functions=[]; unknowns=[]
   } 0;
   assert_equal {
    Raft.comments=[
-  {Comment.content = "(*This is a comment*)"; sequence_num = 0};{Comment.content = "(* This is another comment *)";
-  sequence_num = 1}]; functions=[]
+  {Comment.content = "(*This is a comment*)"; sequence = 0};{Comment.content = "(* This is another comment *)";
+  sequence = 1}]; functions=[]; unknowns=[]
   } @@ Raft.str_to_block "(*This is a comment*) (* This is another comment *)" {
-   Raft.comments=[]; functions=[]
+   Raft.comments=[]; functions=[]; unknowns=[]
   } 0;
   assert_equal {
    Raft.comments=[
-  {Comment.content = "(*This is a comment*)"; sequence_num = 0};{Comment.content = "(* This is another comment *)";
-  sequence_num = 1}]; functions=[]
+  {Comment.content = "(*This is a comment*)"; sequence = 0};{Comment.content = "(* This is another comment *)";
+  sequence = 1}]; functions=[]; unknowns=[]
   } @@ Raft.str_to_block "(*This is a comment*) \n(* This is another comment *)" {
-   Raft.comments=[]; functions=[]
+   Raft.comments=[]; functions=[]; unknowns=[]
   } 0
 
 let test_bts_comments_only _ = 
   assert_equal "(*This is a comment*)\n" @@ Raft.block_to_str {
-   Raft.comments=[{content="(*This is a comment*)";sequence_num=0}]; functions=[]
+   Raft.comments=[{content="(*This is a comment*)";sequence=0}]; functions=[]; unknowns=[]
   } 2 80;
   assert_equal "(*This is a comment*)\n(* This is another comment *)\n" @@ Raft.block_to_str {
    Raft.comments=[
-  {Comment.content = "(*This is a comment*)"; sequence_num = 0};{Comment.content = "(* This is another comment *)";
-  sequence_num = 1}]; functions=[]
+  {Comment.content = "(*This is a comment*)"; sequence = 0};{Comment.content = "(* This is another comment *)";
+  sequence = 1}]; functions=[]; unknowns=[]
   } 2 80
 
 let raft_tests = "Raft Tests" >: test_list [

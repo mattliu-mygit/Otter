@@ -15,45 +15,53 @@ end *)
 type block_count = {
  comments: Comment.comment list;
  functions: Function.function_ list;
- (* unknowns:Unknown.t list; *)
+ unknowns: Unknown.unknown list;
 }
 
+let rec find x lst =
+ match lst with
+ | [] -> raise (Failure "Not Found")
+ | h :: t -> if x = h then 0 else 1 + find x t
+
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
- (* let _ = print_endline str in *)
- if Comment.start_comment str then
-  (* let _ = print_endline "Found a comment" in *)
-   let pos = search_forward Comment.comment_regexp str 0 in
-   let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
-   let offset_amt = match offset_option with
-    | Some i -> i
-    | None -> 0 in
+ let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
+  match x with
+  | 0 -> 
+   (Str.search_forward Comment.comment_regexp str 0)::acc
+  | 1 -> 
+   (Str.search_forward Function.regexp str 0)::acc
+  | _ -> 0::acc
+ ) ~init:[] in
+ let min_val:int = List.fold_left first_sight ~init:(List.hd_exn first_sight) ~f:(fun acc x -> if x < acc then x else acc) in
+ let min_index:int = find min_val first_sight in
+ match min_index with
+ | 0 -> 
+  let pos = search_forward Comment.comment_regexp str 0 in
+  let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
+  let offset_amt = match offset_option with
+   | Some i -> i
+   | None -> 0 in
    let others = string_after str (pos+offset_amt+2) in
    let block, rest = Comment.get_comment others 1 "(*" seq_num in
-    (* let _ = print_endline (string_of_int (Comment.get_sequence_num block)) in
-    let _ = print_endline (Comment.get_content block) in *)
     str_to_block rest ({
       comments = acc.comments @ [block];
       functions = [];
-      (* unknowns = acc.unknowns; *)
+      unknowns = acc.unknowns;
     }) (seq_num + 1)
- else if Str.string_match Function.regexp str 0 then
-  (* let _ = print_endline "Found a function" in *)
+ | 1 ->
   let block, rest = Function.get_function str 0 seq_num in
   str_to_block rest ({
     comments = acc.comments;
     functions = acc.functions @ [block];
-    (* unknowns = acc.unknowns; *)
+    unknowns = acc.unknowns;
   }) (seq_num + 1)
- else
-  (* let _ = print_endline "Found an unknown" in *)
-  acc
- (* let _ = print_endline "Found an unknown" in *)
- (* let block, rest = Unknown.get_unknown str in *)
- (* str_to_block rest ({
-   comments = acc.comments;
-   functions = acc.functions;
-   unknowns = acc.unknowns @ [block];
- }) *)
+ | _ -> 
+  let block, rest = Unknown.get_unknown str seq_num in
+  str_to_block rest ({
+    comments = acc.comments;
+    functions = acc.functions;
+    unknowns = acc.unknowns @ [block];
+  }) (seq_num + 1)
 
  (* 
  check if there are any more blocks remaining in any value in the given block count
@@ -64,26 +72,24 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
  let rec gen_whitespaces (n:int) (out_string:string): string =
   if n = 0 then out_string
   else gen_whitespaces (n-1) (out_string ^ " ") in
- let rec find x lst =
-     match lst with
-     | [] -> raise (Failure "Not Found")
-     | h :: t -> if x = h then 0 else 1 + find x t in
  let rec block_to_string' (block: block_count) (out_string: string) (indent_level:int) =
-  let lengths: int list = List.fold_left [0;1] ~f:(fun acc x -> 
+  let lengths: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
    match x with
    | 0 -> 
     if List.length block.comments > 0 then
      let next_block = List.hd_exn block.comments in
-     let next_block_string = ((gen_whitespaces (indent_size * indent_level) "") ^ (Comment.get_content next_block)) in
-     (String.length next_block_string)::acc
+     next_block.sequence::acc
     else -1::acc
    | 1 -> 
     if List.length block.functions > 0 then
      let next_block = List.hd_exn block.functions in
-     let next_block_string = ((gen_whitespaces (indent_size * (indent_level+next_block.nesting)) "") ^ "TODO ADD FUNCTION STUFF") in
-     (String.length next_block_string)::acc
+     next_block.sequence::acc
     else -1::acc
-   | _ -> -1::acc
+   | _ -> 
+    if List.length block.unknowns > 0 then
+     let next_block = List.hd_exn block.unknowns in
+     next_block.sequence::acc
+    else -1::acc
    ) ~init:[] in
   let min_val:int = List.fold_left lengths ~init:(List.hd_exn lengths) ~f:(fun acc x -> if x < acc then x else acc) in
   let max_val:int = List.fold_left lengths ~init:(List.hd_exn lengths) ~f:(fun acc x -> if x > acc then x else acc) in
@@ -94,8 +100,15 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
    | 0 -> 
     let next_block = List.hd_exn block.comments in
     let next_block_string = Comment.get_content next_block in
-    block_to_string' {comments = List.tl_exn block.comments; functions = block.functions} (out_string ^ next_block_string ^ "\n") indent_level
-   | _ -> out_string
+    block_to_string' {comments = List.tl_exn block.comments; functions = block.functions; unknowns = block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
+   | 1 ->
+    let next_block = List.hd_exn block.functions in
+    let next_block_string = "TODO ADD FUNCTION STUFF" in
+    block_to_string' {comments = block.comments; functions = List.tl_exn block.functions; unknowns = block.unknowns} ((gen_whitespaces ((indent_level + next_block.nesting)*indent_size) out_string) ^ next_block_string ^ "\n") (indent_level+next_block.nesting)
+   | _ ->
+    let next_block = List.hd_exn block.unknowns in
+    let next_block_string = next_block.content in
+    block_to_string' {comments = block.comments; functions = block.functions; unknowns = List.tl_exn block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
  in
  block_to_string' block "" 0
 
@@ -112,7 +125,7 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
   | Some i -> i
   | None -> 80 in
  (* let _ = str_to_block file_string {comments=[]} 0 in *)
- let blocks:block_count = str_to_block file_string {comments=[]; functions=[]} 0 in
+ let blocks:block_count = str_to_block file_string {comments=[]; functions=[]; unknowns=[]} 0 in
  let _ = print_endline ("L is "^(string_of_int (List.length blocks.comments))) in
  let out_string:string = block_to_str blocks indent_size col_width in
  fun () -> output_file "out.ml" out_string
