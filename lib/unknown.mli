@@ -1,5 +1,10 @@
 
 type unknown = {content: string; sequence: int}
-(* val make : string -> t *)
 
-val get_unknown : string -> int -> unknown * string
+val get_unknown : string -> int -> int list -> unknown * string
+
+val find: int -> int list -> int
+
+val min_val: int list -> int
+
+val min_index: int list -> int

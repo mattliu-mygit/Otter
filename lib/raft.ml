@@ -18,11 +18,6 @@ type block_count = {
  unknowns: Unknown.unknown list;
 }
 
-let rec find x lst =
- match lst with
- | [] -> raise (Failure "Not Found")
- | h :: t -> if x = h then 0 else 1 + find x t
-
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
  let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
   match x with
@@ -32,9 +27,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
    (Str.search_forward Function.regexp str 0)::acc
   | _ -> 0::acc
  ) ~init:[] in
- let min_val:int = List.fold_left first_sight ~init:(List.hd_exn first_sight) ~f:(fun acc x -> if x < acc then x else acc) in
- let min_index:int = find min_val first_sight in
- match min_index with
+ match Unknown.min_index first_sight with
  | 0 -> 
   let pos = search_forward Comment.comment_regexp str 0 in
   let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
@@ -56,7 +49,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
     unknowns = acc.unknowns;
   }) (seq_num + 1)
  | _ -> 
-  let block, rest = Unknown.get_unknown str seq_num in
+  let block, rest = Unknown.get_unknown str seq_num first_sight in
   str_to_block rest ({
     comments = acc.comments;
     functions = acc.functions;
@@ -73,7 +66,7 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
   if n = 0 then out_string
   else gen_whitespaces (n-1) (out_string ^ " ") in
  let rec block_to_string' (block: block_count) (out_string: string) (indent_level:int) =
-  let lengths: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
+  let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
    match x with
    | 0 -> 
     if List.length block.comments > 0 then
@@ -91,12 +84,10 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
      next_block.sequence::acc
     else -1::acc
    ) ~init:[] in
-  let min_val:int = List.fold_left lengths ~init:(List.hd_exn lengths) ~f:(fun acc x -> if x < acc then x else acc) in
-  let max_val:int = List.fold_left lengths ~init:(List.hd_exn lengths) ~f:(fun acc x -> if x > acc then x else acc) in
+  let max_val:int = List.fold_left first_sight ~init:(List.hd_exn first_sight) ~f:(fun acc x -> if x > acc then x else acc) in
   if max_val = -1 then out_string
   else
-   let min_index:int = find min_val lengths in
-   match min_index with
+   match Unknown.min_index first_sight with
    | 0 -> 
     let next_block = List.hd_exn block.comments in
     let next_block_string = Comment.get_content next_block in
