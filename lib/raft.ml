@@ -13,6 +13,16 @@ type block_count = {
  unknowns: Unknown.unknown list;
 }
 
+let rec find x lst =
+ match lst with
+ | [] -> raise (Failure "Not Found")
+ | h :: t -> if x = h then 0 else 1 + find x t
+
+ let min_index (lst:int list):int = 
+  let min_val = List.fold_left ~init:(List.hd_exn lst) ~f:(fun acc x -> if x < acc then x else acc) lst in
+  find min_val lst
+
+
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
  if String.length str = 0 then acc
  else
@@ -24,7 +34,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
    (try acc @ [(Str.search_forward Function.regexp str 0)] with _ -> acc @ [5])
   | _ -> acc @ [5]
  ) ~init:[] in
- let m_index:int = Unknown.min_index first_sight in 
+ let m_index:int = min_index first_sight in 
  let processed_index:int = if (List.nth_exn first_sight m_index) = 5 then 5 else
   m_index in
  match processed_index with
@@ -56,11 +66,26 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
     unknowns = acc.unknowns @ [block];
   }) (seq_num + 1))
 
+let wrap_columns (str: string) (width: int):string =
+ let rec wrap_columns' (str: string) (width: int) (out_string: string):string =
+  if String.length str <= width then out_string ^ str
+  else
+   let last_in = try (Str.search_backward (Str.regexp "(in)[ \n\r\t]") str 0) with _ -> -1 in
+   let last_space = try (Str.search_backward (Str.regexp " ") str width) with _ -> -1 in
+   let last_sep = if not (phys_equal last_in (-1)) then last_in else last_space in
+   match last_sep with
+   | -1 -> out_string ^ str
+   | _ -> 
+    let first_part = String.subo str ~len:last_sep in
+    let second_part = String.subo str ~pos:(last_sep+1) in
+    wrap_columns' second_part width (out_string ^ first_part ^ "\n") in
+ wrap_columns' str width ""
+
  (* 
  check if there are any more blocks remaining in any value in the given block count
  if there are, then process the block with the next smallest sequence number and add it to the out string
   *)
-let block_to_str (block: block_count) (indent_size: int) (_:int) =
+let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
  let rec gen_whitespaces (n:int) (out_string:string): string =
   if n = 0 then out_string
   else gen_whitespaces (n-1) (out_string ^ " ") in
@@ -83,14 +108,14 @@ let block_to_str (block: block_count) (indent_size: int) (_:int) =
      acc @ [next_block.sequence]
     else acc @ [5]
    ) ~init:[] in
-  let m_index = Unknown.min_index first_sight in
+  let m_index = min_index first_sight in
   let m_val = List.nth_exn first_sight m_index in
   if m_val = 5 then out_string
   else
    match m_index with
    | 0 -> 
     let next_block = List.hd_exn block.comments in
-    let next_block_string = Comment.get_content next_block in
+    let next_block_string = wrap_columns (Comment.get_content next_block) max_width in
     block_to_string' {comments = List.tl_exn block.comments; functions = block.functions; unknowns = block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
    | 1 ->
     let next_block = List.hd_exn block.functions in
@@ -98,7 +123,7 @@ let block_to_str (block: block_count) (indent_size: int) (_:int) =
     block_to_string' {comments = block.comments; functions = List.tl_exn block.functions; unknowns = block.unknowns} ((gen_whitespaces ((indent_level + next_block.nesting)*indent_size) out_string) ^ next_block_string ^ "\n") (indent_level+next_block.nesting)
    | _ ->
     let next_block = List.hd_exn block.unknowns in
-    let next_block_string = next_block.content in
+    let next_block_string = wrap_columns (next_block.content) max_width in
     block_to_string' {comments = block.comments; functions = block.functions; unknowns = List.tl_exn block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
  in
  block_to_string' block "" 0

@@ -14,15 +14,13 @@ let rec find x lst =
  | [] -> raise (Failure "Not Found")
  | h :: t -> if x = h then 0 else 1 + find x t
 
-
-let min_index (lst:int list):int = 
- let min_val = List.fold_left ~init:(List.hd_exn lst) ~f:(fun acc x -> if x < acc then x else acc) lst in
- find min_val lst
+ let min_index (lst:int list):int = 
+  let min_val = List.fold_left ~init:(List.hd_exn lst) ~f:(fun acc x -> if x < acc then x else acc) lst in
+  find min_val lst
 
 let get_unknown (str:string) (sequence:int) (first_sight:int list) : unknown * string =
  let without_unknown  = sublist 0 (List.length first_sight - 2) first_sight in
  let m_index = min_index without_unknown in
- if m_index < 5 then 
   match m_index with
   | 0 -> 
    let next_comment = try (Str.search_forward Comment.regexp str 0) with _ -> String.length str  in
@@ -37,5 +35,3 @@ let get_unknown (str:string) (sequence:int) (first_sight:int list) : unknown * s
    {content = content; sequence = sequence}, rest
   | _ -> 
    {content = str; sequence = sequence}, ""
- else
-  {content = str; sequence = sequence}, ""
