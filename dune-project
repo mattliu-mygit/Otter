@@ -11,5 +11,4 @@
  (depends
   (ounit2 (> 2.2)) ; for each opam dependency list the version
   (core (> 0.15.0)) ; `opam list core` will display which version of core you have
-  ; (yojson (> 2.0.2))
 ))
