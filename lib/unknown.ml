@@ -20,19 +20,27 @@ let min_index (lst:int list):int =
  find min_val lst
 
 let get_unknown (str:string) (sequence:int) (first_sight:int list) : unknown * string =
+ let _ = print_endline "-1" in
  let without_unknown  = sublist 0 (List.length first_sight - 2) first_sight in
  let m_index = min_index without_unknown in
  if m_index < 5 then 
   match m_index with
   | 0 -> 
-   let next_comment = Str.search_forward Comment.regexp str 0 in
+   let _ = print_endline "0" in
+   let next_comment = try (Str.search_forward Comment.regexp str 0) with _ -> String.length str  in
    let content = String.sub str ~pos:0 ~len:next_comment in
+   let _ = print_endline "0.5" in
    let rest = String.sub str ~pos:next_comment ~len:(String.length str - next_comment) in
+   let _ = print_endline "0.75" in
    {content = content; sequence = sequence}, rest
   | 1 -> 
-   let next_function = Str.search_forward Function.regexp str 0 in
+   let _ = print_endline "1" in
+   let next_function = try (Str.search_forward Function.regexp str 0) with _ -> String.length str in
    let content = String.sub str ~pos:0 ~len:next_function in
-   let rest = String.sub str ~pos:next_function ~len:(String.length str - next_function) in
+   let _ = print_endline "1.5" in
+   let rest = String.sub str ~pos:next_function ~len:(String.length str - 
+    next_function) in
+    let _ = print_endline "1.75" in
    {content = content; sequence = sequence}, rest
   | _ -> 
    {content = str; sequence = sequence}, ""

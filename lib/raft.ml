@@ -14,6 +14,9 @@ type block_count = {
 }
 
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
+ let _ = print_endline "start" in
+ if String.length str = 0 then acc
+ else
  let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
   match x with
   | 0 -> 
@@ -22,7 +25,12 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
    (try (Str.search_forward Function.regexp str 0)::acc with _ -> 5::acc)
   | _ -> 0::acc
  ) ~init:[] in
- match Unknown.min_index first_sight with
+ let _ = print_endline (string_of_int (Unknown.min_index first_sight)) in
+ let _ = print_endline str in
+ let m_index:int = Unknown.min_index first_sight in 
+ let processed_index:int = if (List.nth_exn first_sight m_index) = 5 then 5 else
+  m_index in
+ match processed_index with
  | 0 -> 
   let pos = try (search_forward Comment.regexp str 0) with _ -> 0 in
   let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
