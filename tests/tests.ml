@@ -332,6 +332,30 @@ let test_get_closed_comment_index _ =
   assert_equal (Function.get_closed_comment_index "(* hello *)" 0) @@ 11;
   assert_equal (Function.get_closed_comment_index "(* (* *) *) (* *)" 2) @@ 11
 
+let test_to_string _ =
+  let a = {
+    Function.body = "body";
+    nesting = 0;
+    sequence = 0;
+    fields = {
+      Function.name = "function_name";
+      parameters = [
+        ("param1", "");
+        ("param2", "string");
+        ("param3", "string list * int list");
+        ("param4", "string * (int * bool) list");
+      ];
+      return_type = "string list";
+      recursive = true
+    }
+  } in
+  assert_equal (Function.to_string a 80) @@
+  ("let rec function_name param1 (param2: string) (param3: string list * int list) \n(param4: string * (int * bool) list) \n: string list = \n",
+  "body");;
+
+
+
+
 let function_tests = "Function Tests" >: test_list [
     "Get Function" >:: test_get_function;
     "Get Function Name" >:: test_get_function_name;
@@ -342,6 +366,7 @@ let function_tests = "Function Tests" >: test_list [
     "Get Body Inner" >:: test_get_body_inner;
     "Get Body" >:: test_get_body;
     "Get Closed Comment Index" >:: test_get_closed_comment_index;
+    "To String" >:: test_to_string;
   ]
 
 (** 

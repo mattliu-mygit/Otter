@@ -16,7 +16,7 @@ type function_ =
   sequence: int; (* sequence number in the file *)
 }
 
-let string_literal_regexp = Str.regexp "[^\\]?\"";;
+let string_literal_regexp = Str.regexp "\"";;
 let open_comment_regexp = Str.regexp "(\\*";;
 let closed_comment_regexp = Str.regexp "\\*)";;
 let let_regexp = Str.regexp "[^A-Za-z0-9]?let[^A-Za-z0-9]+";;
@@ -179,7 +179,7 @@ let get_closed_comment_index (file_contents: string) (initial_pos: int): int =
 (*
   Here, we assume that these functions end with ";;"
 *)
-let get_body_outer (init: function_): (function_ *string) =
+let get_body_outer (init: function_): (function_ * string) =
   let dne = 1 + String.length init.body in
   let rec get_body_outer_rec (pos: int): (function_ * string) =
     let end_regexp = Str.regexp ";;" in
@@ -194,7 +194,7 @@ let get_body_outer (init: function_): (function_ *string) =
     match List.min_elt indices ~compare:(fun (_, v1) (_,  v2) -> Int.compare v1 v2) with
     | Some ("literal", index) ->
       (* find end literal and recursive call *)
-      let end_literal_index = Str.search_forward string_literal_regexp init.body (index) in
+      let end_literal_index = Str.search_forward string_literal_regexp init.body (index + 1) in
       get_body_outer_rec (end_literal_index + 1)
     | Some ("open comment", index) ->
       (* find end comment and recursive call *)
@@ -269,7 +269,7 @@ let get_body_inner (init: function_): (function_ * string) =
     | Some ("literal", index) ->
       (* find end literal and recursive call *)
       let end_literal_index = Str.search_forward string_literal_regexp init.body (index + 1) in
-      get_body_end lets (end_literal_index)
+      get_body_end lets (end_literal_index + 1)
     | Some ("open comment", index) ->
       (* find end comment and recursive call *)
       let closed_comment_index = get_closed_comment_index init.body (index + 2) in
@@ -298,36 +298,37 @@ let get_body (init: function_): (function_ * string) =
   else get_body_inner init (* nested function -> match let-in pairs *)
 ;;
 
-let rec parameters_to_string (parameters: (string * string) list) (accum: string) (column_width: int): string =
-  match parameters with
-  | [] -> accum
-  | (param_name, param_type) :: tl -> 
-    let length =
-      try
-        let last_newline = Str.search_backward (Str.regexp "\n") accum 0 in
-        (String.length accum) - last_newline
-      with _ -> String.length accum
-    in
-    let name_length = String.length param_name in
-    match param_type with
-    | "" ->
-      if (name_length + length) > column_width then
-        parameters_to_string tl (accum ^ "\n" ^ param_name ^ " ") column_width
-      else
-        parameters_to_string tl (accum ^ param_name ^ " ") column_width
-    | _ ->
-      let type_length = String.length param_type in
-      if (name_length + type_length + length + 4) > column_width then
-        parameters_to_string tl (accum ^ "\n" ^ "(" ^ param_name ^ ": " ^ param_type ^ ") ") column_width
-      else
-        parameters_to_string tl (accum ^ "(" ^ param_name ^ ": " ^ param_type ^ ") ") column_width
-;;
+
 
 let to_string (input: function_) (column_width: int) : string * string = 
+  let rec parameters_to_string (parameters: (string * string) list) (accum: string): string =
+    match parameters with
+    | [] -> accum
+    | (param_name, param_type) :: tl -> 
+      let length =
+        try
+          let last_newline = Str.search_backward (Str.regexp "\n") accum 0 in
+          (String.length accum) - last_newline
+        with _ -> String.length accum
+      in
+      let name_length = String.length param_name in
+      match param_type with
+      | "" ->
+        if (name_length + length) > column_width then
+          parameters_to_string tl (accum ^ "\n" ^ param_name ^ " ")
+        else
+          parameters_to_string tl (accum ^ param_name ^ " ")
+      | _ ->
+        let type_length = String.length param_type in
+        if (name_length + type_length + length + 4) > column_width then
+          parameters_to_string tl (accum ^ "\n" ^ "(" ^ param_name ^ ": " ^ param_type ^ ") ")
+        else
+          parameters_to_string tl (accum ^ "(" ^ param_name ^ ": " ^ param_type ^ ") ")
+  in
   let init = 
-    if input.fields.recursive then "let rec" ^ input.fields.name ^ " "
+    if input.fields.recursive then "let rec " ^ input.fields.name ^ " "
     else "let " ^ input.fields.name ^ " " in
-  let params = parameters_to_string input.fields.parameters init column_width in
+  let params = parameters_to_string input.fields.parameters init in
   let params_length =
       try
         let last_newline = Str.search_backward (Str.regexp "\n") params 0 in
