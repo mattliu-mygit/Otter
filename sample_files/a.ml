@@ -8,10 +8,8 @@ let fun1 var_1 var_2 =
 ;;
 
 let fun2 (var_one: float) (var_two: float): float =
-  let sum = var_one +. var_two in
-  let diff = var_one -. var_two in
-  if var_one <> var_two then diff
-  else sum
+  let sum = var_one +. var_two in let diff = var_one -.
+  var_two in if var_one <> var_two then diff else sum
 ;;
 
 (* Samples *)

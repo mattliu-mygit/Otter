@@ -16,6 +16,9 @@ type function_ =
 
 val regexp: Str.regexp
 
+(*
+  Given a string that contains contents of a .ml file, parse the first function and return it as a function_ type
+*)
 val get_function: string -> int -> int -> (function_ * string)
 
 val get_function_name: function_ -> function_

@@ -24,7 +24,7 @@ let in_regexp = Str.regexp "[^A-Za-z0-9]?in[^A-Za-z0-9]+";;
 (* Regular Expression to match function declarations:
 ? "let[any number of spaces][function name][any number of spaces][at least one parameter]"
 *)
-let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(A-Za-z]|};; (* todo: currently unused *)
+let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(_a-z]|};;
 
 let get_function_name (init: function_): function_ =
   let no_leading_whitespace = String.lstrip init.body in
@@ -178,7 +178,7 @@ let get_closed_comment_index (file_contents: string) (initial_pos: int): int =
 (*
   Here, we assume that these functions end with ";;"
 *)
-let get_body_outer (init: function_): (function_ * string) =
+let get_body_outer (init: function_): (function_ *string) =
   let dne = 1 + String.length init.body in
   let rec get_body_outer_rec (pos: int): (function_ * string) =
     let end_regexp = Str.regexp ";;" in
@@ -238,10 +238,9 @@ let get_body_outer (init: function_): (function_ * string) =
           end
         | _ -> failwith "unreachable2"
       end
-    | Some _ | None -> failwith "unreachable3" 
+    | Some _ | None -> failwith "unreachable3"
   in get_body_outer_rec 0
 ;;
-
 
 let get_body_inner (init: function_): (function_ * string) =
   (* These regular expressions assume there are no string literals that match it *)
@@ -293,10 +292,12 @@ let get_body_inner (init: function_): (function_ * string) =
   }, String.lstrip @@ String.sub init.body ~pos:end_index ~len:remainder_length)
 ;;
 
-let get_body (init: function_): (function_ * string)=
+let get_body (init: function_): (function_ * string) =
   if init.nesting = 0 then get_body_outer init (* top-level function -> look for ;; *)
   else get_body_inner init (* nested function -> match let-in pairs *)
 ;;
+
+let to_string (): string list
 
 let get_function (file_contents: string) (nesting: int) (sequence: int): (function_ * string) =
   let init = {
