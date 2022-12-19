@@ -7,20 +7,18 @@ let fun1 var_1 var_2 =
   else var_1 - var_2
 ;;
 
-let fun2 (var_one: float) (var_two: float): float =
-  let sum = var_one +. var_two in let diff = var_one -.
-  var_two in if var_one <> var_two then diff else sum
-;;
+let fun2 (var_one: float) (var_two: float): float = let sum = var_one +. var_two in let diff = var_one -. var_two in if var_one <> var_two then diff else sum;; let outer a (b: int): int =  let inner c d =     0  in inner a b;;
 
 (* Samples *)
 
-let outer a: int (b: int) =
-  let inner c d = 
-    0
-  in inner a b
+
+
+
+
 
 let new_func a b =
   0
+;;
 
 (*
   Function declaration examples:

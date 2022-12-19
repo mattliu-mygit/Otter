@@ -45,14 +45,14 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
    let block, rest = Comment.get_comment others 1 "(*" seq_num in
     str_to_block rest ({
       comments = acc.comments @ [block];
-      functions = [];
+      functions = acc.functions; 
       unknowns = acc.unknowns;
     }) (seq_num + 1)
  | 1 ->
-  (try (let block, rest = Function.get_function str 0 seq_num in
+  (try (let func, rest = Function.get_function str 0 seq_num in
   str_to_block rest ({
     comments = acc.comments;
-    functions = acc.functions @ [block];
+    functions = acc.functions @ [func];
     unknowns = acc.unknowns;
   }) (seq_num + 1)) with _ -> 
    (let block, rest = Unknown.get_unknown str seq_num [List.hd_exn first_sight;(try (Str.search_forward Function.regexp str ((List.nth_exn first_sight 1)+3)) with _ -> -1);0] in
@@ -86,7 +86,7 @@ let wrap_columns (str: string) (width: int) (indent_level:int) (indent_size:int)
    | _ -> 
     let first_part = String.subo str ~len:last_sep in
     let second_part = String.subo str ~pos:(last_sep+1) in
-    wrap_columns' second_part (out_string^ first_part ^ (gen_whitespaces ((indent_level+1) * indent_size) "\n")) in
+    wrap_columns' second_part (out_string^ first_part ^ (gen_whitespaces ((indent_level) * indent_size) "\n")) in
  wrap_columns' str ""
 
  (* 
@@ -123,7 +123,8 @@ let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
     block_to_string' {comments = List.tl_exn block.comments; functions = block.functions; unknowns = block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
    | 1 ->
     let next_block = List.hd_exn block.functions in
-    let next_block_string = "TODO ADD FUNCTION STUFF" in
+    let (header, body) = Function.to_string next_block max_width in
+    let next_block_string = header ^ "\n" ^ (wrap_columns body max_width (indent_level) indent_size) ^ "\n;;" in
     block_to_string' {comments = block.comments; functions = List.tl_exn block.functions; unknowns = block.unknowns} ((gen_whitespaces ((indent_level + next_block.nesting)*indent_size) out_string) ^ next_block_string ^ "\n") (*(indent_level+next_block.nesting)*) indent_level
    | _ ->
     let next_block = List.hd_exn block.unknowns in
@@ -131,6 +132,7 @@ let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
     block_to_string' {comments = block.comments; functions = block.functions; unknowns = List.tl_exn block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
  in
  block_to_string' block "" 0
+;;
 
 [@@@coverage off]
 let output_file (file_name:string) (out_string:string): unit =

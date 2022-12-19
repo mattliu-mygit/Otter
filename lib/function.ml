@@ -25,7 +25,7 @@ let in_regexp = Str.regexp "[^A-Za-z0-9]?in[^A-Za-z0-9]+";;
 (* Regular Expression to match function declarations:
 ? "let[any number of spaces][function name][any number of spaces][at least one parameter]"
 *)
-let regexp = Str.regexp {| *let +[A-Za-z0-9]+ +[(_a-z]|};;
+let regexp = Str.regexp {|[ \n\t\r]*let +[A-Za-z0-9]+ +[(_a-z]|};;
 
 let get_function_name (init: function_): function_ =
   let no_leading_whitespace = String.lstrip init.body in
@@ -298,8 +298,6 @@ let get_body (init: function_): (function_ * string) =
   else get_body_inner init (* nested function -> match let-in pairs *)
 ;;
 
-
-
 let to_string (input: function_) (column_width: int) : string * string = 
   let rec parameters_to_string (parameters: (string * string) list) (accum: string): string =
     match parameters with
@@ -349,7 +347,7 @@ let to_string (input: function_) (column_width: int) : string * string =
 
 let get_function (file_contents: string) (nesting: int) (sequence: int): (function_ * string) =
   let init = {
-    body = file_contents;
+    body = String.lstrip file_contents;
     fields = {
       name = "";
       parameters = [];
