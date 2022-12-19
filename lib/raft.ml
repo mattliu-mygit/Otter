@@ -14,7 +14,6 @@ type block_count = {
 }
 
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
- let _ = print_endline "start" in
  if String.length str = 0 then acc
  else
  (let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
@@ -25,13 +24,9 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
    (try acc @ [(Str.search_forward Function.regexp str 0)] with _ -> acc @ [5])
   | _ -> acc @ [5]
  ) ~init:[] in
- let _ = print_endline (string_of_int (Unknown.min_index first_sight)) in
- let _ = print_endline str in
  let m_index:int = Unknown.min_index first_sight in 
- let _ = print_endline (string_of_int m_index) in
  let processed_index:int = if (List.nth_exn first_sight m_index) = 5 then 5 else
   m_index in
-  let _ = print_endline (string_of_int processed_index) in
  match processed_index with
  | 0 -> 
   let pos = try (search_forward Comment.regexp str 0) with _ -> 0 in
@@ -47,7 +42,6 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
       unknowns = acc.unknowns;
     }) (seq_num + 1)
  | 1 ->
-  let _ = print_endline ("Trying to get " ^ str) in
   let block, rest = Function.get_function str 0 seq_num in
   str_to_block rest ({
     comments = acc.comments;
@@ -55,7 +49,6 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
     unknowns = acc.unknowns;
   }) (seq_num + 1)
  | _ -> 
-  let _ = print_endline "here" in
   let block, rest = Unknown.get_unknown str seq_num first_sight in
   str_to_block rest ({
     comments = acc.comments;
@@ -67,9 +60,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
  check if there are any more blocks remaining in any value in the given block count
  if there are, then process the block with the next smallest sequence number and add it to the out string
   *)
-let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
- let _ = print_endline "here" in
- let _ = print_endline (string_of_int col_width) in
+let block_to_str (block: block_count) (indent_size: int) (_:int) =
  let rec gen_whitespaces (n:int) (out_string:string): string =
   if n = 0 then out_string
   else gen_whitespaces (n-1) (out_string ^ " ") in
@@ -92,11 +83,6 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
      acc @ [next_block.sequence]
     else acc @ [5]
    ) ~init:[] in
-   let _ = print_endline "now here" in
-  let _ = print_endline "now f here" in
-  let _ = print_endline (string_of_int (Unknown.min_index first_sight)) in
-  let _ = print_endline (string_of_int (List.length block.functions)) in
-  let _ = print_endline (string_of_int (List.length first_sight)) in
   let m_index = Unknown.min_index first_sight in
   let m_val = List.nth_exn first_sight m_index in
   if m_val = 5 then out_string
@@ -131,7 +117,6 @@ let process_args (indent_size:int option) (col_width:int option) (file_string:st
   | None -> 80 in
  (* let _ = str_to_block file_string {comments=[]} 0 in *)
  let blocks:block_count = str_to_block file_string {comments=[]; functions=[]; unknowns=[]} 0 in
- let _ = print_endline ("L is "^(string_of_int (List.length blocks.comments))) in
  let out_string:string = block_to_str blocks indent_size col_width in
  fun () -> output_file "out.ml" out_string
   
