@@ -1,6 +1,6 @@
 type comment = {content: string; sequence: int}
 
-val comment_regexp: Str.regexp
+val regexp: Str.regexp
 
 val end_comment_regexp: Str.regexp
 

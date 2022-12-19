@@ -371,11 +371,11 @@ let test_function_regex _ =
   assert_equal false @@ Str.string_match function_regexp "let var1 = 4 + 5" 0
 
 let test_open_comment_regexp _ = 
-  assert_equal true @@ Str.string_match Otter_lib.Comment.comment_regexp "(* This is a comment *)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.comment_regexp "(* This is a comment (* with a nested comment *) *)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.comment_regexp "   (* This is a comment *)" 0;
-  assert_equal false @@ Str.string_match Otter_lib.Comment.comment_regexp "   This is a comment *)" 0;
-  assert_equal false @@ Str.string_match Otter_lib.Comment.comment_regexp "   This is a comm(*ent *)" 0
+  assert_equal true @@ Str.string_match Otter_lib.Comment.regexp "(* This is a comment *)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.regexp "(* This is a comment (* with a nested comment *) *)" 0;
+  assert_equal true @@ Str.string_match Otter_lib.Comment.regexp "   (* This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Otter_lib.Comment.regexp "   This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Otter_lib.Comment.regexp "   This is a comm(*ent *)" 0
 
 let test_close_comment_regexp _ = 
   assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "*)" 0;

@@ -9,8 +9,6 @@
   lib/unknown.mli
   lib/unknown.ml
   lib/otter.ml
-  lib/infraction.mli
-  lib/infraction.ml
   lib/function.ml
   lib/function.mli
   lib/variable.mli

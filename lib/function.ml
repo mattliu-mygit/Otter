@@ -297,9 +297,7 @@ let get_body (init: function_): (function_ * string) =
   else get_body_inner init (* nested function -> match let-in pairs *)
 ;;
 
-let to_string (input: function_): string * string = ("", "")
-
-
+let to_string (input: function_): string * string = (input.body, "")
 
 let get_function (file_contents: string) (nesting: int) (sequence: int): (function_ * string) =
   let init = {

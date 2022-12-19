@@ -7,11 +7,6 @@ open Core;;
    We need to make types for both comment and unknown blocks, and then a generic block type that can be either of them.
 *)
 
-(* module type Block = sig
-  type t
-  val make : string -> t
-end *)
-
 type block_count = {
  comments: Comment.comment list;
  functions: Function.function_ list;
@@ -22,14 +17,14 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
  let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
   match x with
   | 0 -> 
-   (Str.search_forward Comment.comment_regexp str 0)::acc
+   (try (Str.search_forward Comment.regexp str 0)::acc with _ -> 5::acc)
   | 1 -> 
-   (Str.search_forward Function.regexp str 0)::acc
+   (try (Str.search_forward Function.regexp str 0)::acc with _ -> 5::acc)
   | _ -> 0::acc
  ) ~init:[] in
  match Unknown.min_index first_sight with
  | 0 -> 
-  let pos = search_forward Comment.comment_regexp str 0 in
+  let pos = try (search_forward Comment.regexp str 0) with _ -> 0 in
   let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
   let offset_amt = match offset_option with
    | Some i -> i
