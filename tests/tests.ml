@@ -454,28 +454,28 @@ let get_comment_5:(Comment.comment*string) = Comment.get_comment " (*This is a c
 let get_comment_6:(Comment.comment*string) = Comment.get_comment " (*This is a comment*)(*f*)*) asd(*f*)" 1 "(*" 2
 
 let test_get_comment _ =
- assert_equal (comment_1, "") @@ get_comment_1;
- assert_equal (comment_2, "") @@ get_comment_2;
- assert_equal (comment_3, "") @@ get_comment_3;
- assert_equal (comment_4, " asdf") @@ get_comment_4;
- assert_equal (comment_5, " asd(*f*)") @@ get_comment_5;
- assert_equal (comment_6, " asd(*f*)") @@ get_comment_6
+  assert_equal (comment_1, "") @@ get_comment_1;
+  assert_equal (comment_2, "") @@ get_comment_2;
+  assert_equal (comment_3, "") @@ get_comment_3;
+  assert_equal (comment_4, " asdf") @@ get_comment_4;
+  assert_equal (comment_5, " asd(*f*)") @@ get_comment_5;
+  assert_equal (comment_6, " asd(*f*)") @@ get_comment_6
 
 let test_get_sequence_num _ =
- assert_equal 0 @@ Comment.get_sequence_num (fst get_comment_1);
- assert_equal 1 @@ Comment.get_sequence_num (fst get_comment_2);
- assert_equal 2 @@ Comment.get_sequence_num (fst get_comment_3)
+  assert_equal 0 @@ Comment.get_sequence_num (fst get_comment_1);
+  assert_equal 1 @@ Comment.get_sequence_num (fst get_comment_2);
+  assert_equal 2 @@ Comment.get_sequence_num (fst get_comment_3)
 
 let test_get_content _ =
- assert_equal "(*This is a comment*)" @@ Comment.get_content (fst get_comment_1);
- assert_equal comment_2.content @@ Comment.get_content (fst get_comment_2);
- assert_equal comment_3.content @@ Comment.get_content (fst get_comment_3)
+  assert_equal "(*This is a comment*)" @@ Comment.get_content (fst get_comment_1);
+  assert_equal comment_2.content @@ Comment.get_content (fst get_comment_2);
+  assert_equal comment_3.content @@ Comment.get_content (fst get_comment_3)
 
 let comment_tests = "Comment Tests" >: test_list [
- "start_comment" >:: test_start_comment;
- "get_comment" >:: test_get_comment;
- "get_sequence_num" >:: test_get_sequence_num;
- "get_content" >:: test_get_content;
+  "start_comment" >:: test_start_comment;
+  "get_comment" >:: test_get_comment;
+  "get_sequence_num" >:: test_get_sequence_num;
+  "get_content" >:: test_get_content;
 ]
 
 let test_string_to_block _ =
@@ -515,14 +515,38 @@ let test_block_to_string _ =
   } 2 80
 
 let test_wrap_columns _ = 
- assert_equal "(*This is a comment*)\n  (* This is another\n  comment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ") 0 2;
- assert_equal "(*This is in\n  a comment*) (* This is\n  another comment *)" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *)" (String.length "(*This is in a comment*) ") 0 2;
- assert_equal "(*This is in\n  a comment*) (* This is\n  another comment *) asdf" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *) asdf" (String.length "(*This is in a comment*) ") 0 2
+  assert_equal "(*This is a comment*)\n  (* This is another\n  comment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ") 0 2;
+  assert_equal "(*This is in\n  a comment*) (* This is\n  another comment *)" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *)" (String.length "(*This is in a comment*) ") 0 2;
+  assert_equal "(*This is in\n  a comment*) (* This is\n  another comment *) asdf" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *) asdf" (String.length "(*This is in a comment*) ") 0 2;
+  assert_equal "supercalifragalisticexpealadoshus" @@ Raft.wrap_columns "supercalifragalisticexpealadoshus" 10 0 2
 
 let raft_tests = "Raft Tests" >: test_list [
- "str_to_block" >:: test_string_to_block;
- "block_to_str" >:: test_block_to_string;
- "wrap_columns" >:: test_wrap_columns;
+  "str_to_block" >:: test_string_to_block;
+  "block_to_str" >:: test_block_to_string;
+  "wrap_columns" >:: test_wrap_columns;
+]
+
+let test_get_unknown _ = 
+  assert_equal ({Unknown.content="asdf";sequence=0}, "") @@ Unknown.get_unknown "asdf" 0 [-1;-1;-1];
+  assert_equal ({Unknown.content="asdf ";sequence=0}, "(* asdf *)") @@ Unknown.get_unknown "asdf (* asdf *)" 0 [5;-1;-1];
+  assert_equal ({Unknown.content="asdf\n ";sequence=0}, "let asdf df sd = asdf \n (* asdf *)") @@ Unknown.get_unknown "asdf\n let asdf df sd = asdf \n (* asdf *)" 0 [31;6;-1]
+
+let test_find _ =
+  assert_equal 0 @@ Unknown.find 26 [26; 27; 28];
+  assert_equal 0 @@ Unknown.find 27 [27];
+  assert_equal 1 @@ Unknown.find 27 [26; 27; 28];
+  assert_raises  (Failure "Not Found") (fun () -> (Unknown.find 29 [26; 28; 27]))
+
+let test_sublist _ =
+  assert_equal [1;2;3;4] @@ Unknown.sublist 0 3 [1;2;3;4;5];
+  assert_equal [1;2;3] @@ Unknown.sublist 0 2 [1;2;3];
+  assert_equal [2;3;4] @@ Unknown.sublist 1 3 [1;2;3;4;5];
+  assert_raises  (Failure "Range out of bounds") (fun () -> Unknown.sublist 0 2 [])
+
+let unknown_tests = "Unknown Tests" >: test_list [
+  "get_unknown" >:: test_get_unknown;
+  "find" >:: test_find;
+  "sublist" >:: test_sublist;
 ]
 
 let series = "Otter Tests" >::: [
@@ -530,6 +554,7 @@ let series = "Otter Tests" >::: [
     variable_tests;
     regex_tests;
     comment_tests;
+    unknown_tests;
     raft_tests;
   ]
 let () =
