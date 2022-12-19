@@ -23,7 +23,7 @@ let min_index (lst:int list):int =
 let get_unknown (str:string) (sequence:int) (first_sight:int list) : unknown * string =
  let without_unknown  = sublist 0 (List.length first_sight - 2) first_sight in
  let min_index = min_index without_unknown in
- if min_index > 5 then 
+ if min_index < 5 then 
   let content = String.sub str 0 min_index in
   let rest = String.sub str min_index (String.length str - min_index) in
   {content = content; sequence = sequence}, rest
