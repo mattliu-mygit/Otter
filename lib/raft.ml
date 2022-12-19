@@ -22,7 +22,6 @@ let rec find x lst =
   let min_val = List.fold_left ~init:(List.hd_exn lst) ~f:(fun acc x -> if x < acc then x else acc) lst in
   find min_val lst
 
-
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
  if String.length str = 0 then acc
  else

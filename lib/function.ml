@@ -15,7 +15,8 @@ type function_ =
   nesting: int; (* the degree of nesting for this block, default is 0 *)
   sequence: int; (* sequence number in the file *)
 }
-let string_literal_regexp = Str.regexp "[^\\]\"";;
+
+let string_literal_regexp = Str.regexp "[^\\]?\"";;
 let open_comment_regexp = Str.regexp "(\\*";;
 let closed_comment_regexp = Str.regexp "\\*)";;
 let let_regexp = Str.regexp "[^A-Za-z0-9]?let[^A-Za-z0-9]+";;
@@ -183,8 +184,8 @@ let get_body_outer (init: function_): (function_ *string) =
   let rec get_body_outer_rec (pos: int): (function_ * string) =
     let end_regexp = Str.regexp ";;" in
     let string_literal_index =
-        try ("literal", 1 + Str.search_forward string_literal_regexp init.body pos)
-        with _ -> ("literal", dne) in
+      try ("literal", 1 + Str.search_forward string_literal_regexp init.body pos)
+      with _ -> ("literal", dne) in
     let open_comment_index =
       try ("open comment", Str.search_forward open_comment_regexp init.body pos)
       with _ -> ("open comment", dne) in
@@ -193,7 +194,7 @@ let get_body_outer (init: function_): (function_ *string) =
     match List.min_elt indices ~compare:(fun (_, v1) (_,  v2) -> Int.compare v1 v2) with
     | Some ("literal", index) ->
       (* find end literal and recursive call *)
-      let end_literal_index = Str.search_forward string_literal_regexp init.body (index + 1) in
+      let end_literal_index = Str.search_forward string_literal_regexp init.body (index) in
       get_body_outer_rec (end_literal_index + 1)
     | Some ("open comment", index) ->
       (* find end comment and recursive call *)
@@ -268,7 +269,7 @@ let get_body_inner (init: function_): (function_ * string) =
     | Some ("literal", index) ->
       (* find end literal and recursive call *)
       let end_literal_index = Str.search_forward string_literal_regexp init.body (index + 1) in
-      get_body_end lets (end_literal_index + 1)
+      get_body_end lets (end_literal_index)
     | Some ("open comment", index) ->
       (* find end comment and recursive call *)
       let closed_comment_index = get_closed_comment_index init.body (index + 2) in
@@ -297,7 +298,53 @@ let get_body (init: function_): (function_ * string) =
   else get_body_inner init (* nested function -> match let-in pairs *)
 ;;
 
-let to_string (input: function_): string * string = (input.body, "")
+let rec parameters_to_string (parameters: (string * string) list) (accum: string) (column_width: int): string =
+  match parameters with
+  | [] -> accum
+  | (param_name, param_type) :: tl -> 
+    let length =
+      try
+        let last_newline = Str.search_backward (Str.regexp "\n") accum 0 in
+        (String.length accum) - last_newline
+      with _ -> String.length accum
+    in
+    let name_length = String.length param_name in
+    match param_type with
+    | "" ->
+      if (name_length + length) > column_width then
+        parameters_to_string tl (accum ^ "\n" ^ param_name ^ " ") column_width
+      else
+        parameters_to_string tl (accum ^ param_name ^ " ") column_width
+    | _ ->
+      let type_length = String.length param_type in
+      if (name_length + type_length + length + 4) > column_width then
+        parameters_to_string tl (accum ^ "\n" ^ "(" ^ param_name ^ ": " ^ param_type ^ ") ") column_width
+      else
+        parameters_to_string tl (accum ^ "(" ^ param_name ^ ": " ^ param_type ^ ") ") column_width
+;;
+
+let to_string (input: function_) (column_width: int) : string * string = 
+  let init = 
+    if input.fields.recursive then "let rec" ^ input.fields.name ^ " "
+    else "let " ^ input.fields.name ^ " " in
+  let params = parameters_to_string input.fields.parameters init column_width in
+  let params_length =
+      try
+        let last_newline = Str.search_backward (Str.regexp "\n") params 0 in
+        (String.length params) - last_newline
+      with _ -> String.length params
+  in
+  match input.fields.return_type with
+  | "" -> 
+    if params_length + 4 > column_width then
+      (params ^ "\n= \n", input.body)
+    else (params ^ "= \n", input.body)
+  | return_type ->
+    let return_type_length = String.length return_type in
+    if params_length + return_type_length + 4 > column_width then
+      (params ^ "\n: " ^ return_type ^ " = \n", input.body)
+    else (params ^ ": " ^ return_type ^ " = \n", input.body)
+;;
 
 let get_function (file_contents: string) (nesting: int) (sequence: int): (function_ * string) =
   let init = {
