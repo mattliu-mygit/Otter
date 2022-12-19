@@ -349,7 +349,9 @@ let function_tests = "Function Tests" >: test_list [
 **)
 
 let test_get_variable _ =
-  assert_equal (Variable.get_variable "let x = y + z in leftover content") @@ ({name = "x"; content = "y + z in"; return_type = ""}, "leftover content") 
+  assert_equal (Variable.get_variable "let x = y + z in leftover content") @@ ({name = "x"; content = "y + z in"; return_type = ""}, "leftover content");
+  assert_equal (Variable.get_variable "let var_name : return_type = body in whatever else blah") @@ ({name = "var_name"; content = "body in"; return_type = "return_type"}, "whatever else blah");
+  assert_equal (Variable.get_variable "let random stuff:bad spacing =within words in leftover") @@ ({name = "random stuff"; content = "within words in"; return_type = "bad spacing"}, "leftover")
 
 let test_start_variable _ =
   assert_equal true @@ Variable.start_variable "let valid_variable = some content"
