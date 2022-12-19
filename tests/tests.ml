@@ -374,7 +374,9 @@ let function_tests = "Function Tests" >: test_list [
 **)
 
 let test_get_variable _ =
-  assert_equal (Variable.get_variable "let x = y + z in leftover content") @@ ({name = "x"; content = " y + z"}, " in leftover content") 
+  assert_equal (Variable.get_variable "let x = y + z in leftover content") @@ ({name = "x"; content = "y + z in"; return_type = ""}, "leftover content");
+  assert_equal (Variable.get_variable "let var_name : return_type = body in whatever else blah") @@ ({name = "var_name"; content = "body in"; return_type = "return_type"}, "whatever else blah");
+  assert_equal (Variable.get_variable "let random stuff:bad spacing =within words in leftover") @@ ({name = "random stuff"; content = "within words in"; return_type = "bad spacing"}, "leftover")
 
 let test_start_variable _ =
   assert_equal true @@ Variable.start_variable "let valid_variable = some content"
@@ -476,7 +478,7 @@ let comment_tests = "Comment Tests" >: test_list [
  "get_content" >:: test_get_content;
 ]
 
-let test_stb_comments_only _ =
+let test_string_to_block _ =
   assert_equal {
    Raft.comments=[{content="(*This is a comment*)";sequence=0}]; functions=[]; unknowns=[]
   } @@ Raft.str_to_block "(*This is a comment*)" {
@@ -497,7 +499,7 @@ let test_stb_comments_only _ =
    Raft.comments=[]; functions=[]; unknowns=[]
   } 0
 
-let test_bts_comments_only _ = 
+let test_block_to_string _ = 
   assert_equal "(*This is a comment*)\n" @@ Raft.block_to_str {
    Raft.comments=[{content="(*This is a comment*)";sequence=0}]; functions=[]; unknowns=[]
   } 2 80;
@@ -505,15 +507,21 @@ let test_bts_comments_only _ =
    Raft.comments=[
   {Comment.content = "(*This is a comment*)"; sequence = 0};{Comment.content = "(* This is another comment *)";
   sequence = 1}]; functions=[]; unknowns=[]
+  } 2 80;
+  assert_equal "(*This is a comment*)\n(* This is another comment *)\nasdf\n" @@ Raft.block_to_str {
+   Raft.comments=[
+  {Comment.content = "(*This is a comment*)"; sequence = 0};{Comment.content = "(* This is another comment *)";
+  sequence = 1}]; functions=[]; unknowns=[{Unknown.content="asdf";sequence=2}]
   } 2 80
 
 let test_wrap_columns _ = 
- assert_equal "(*This is a comment*)\n(* This is another\ncomment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ");
- assert_equal "(*This is in\na comment*) (* This is\nanother comment *)" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *)" (String.length "(*This is in a comment*) ")
+ assert_equal "(*This is a comment*)\n  (* This is another\n  comment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ") 0 2;
+ assert_equal "(*This is in\n  a comment*) (* This is\n  another comment *)" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *)" (String.length "(*This is in a comment*) ") 0 2;
+ assert_equal "(*This is in\n  a comment*) (* This is\n  another comment *) asdf" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *) asdf" (String.length "(*This is in a comment*) ") 0 2
 
 let raft_tests = "Raft Tests" >: test_list [
- "str_to_block comments only" >:: test_stb_comments_only;
- "block_to_str comments only" >:: test_bts_comments_only;
+ "str_to_block" >:: test_string_to_block;
+ "block_to_str" >:: test_block_to_string;
  "wrap_columns" >:: test_wrap_columns;
 ]
 
