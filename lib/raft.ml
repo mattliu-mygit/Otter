@@ -68,6 +68,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
  if there are, then process the block with the next smallest sequence number and add it to the out string
   *)
 let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
+ let _ = print_endline "here" in
  let _ = print_endline (string_of_int col_width) in
  let rec gen_whitespaces (n:int) (out_string:string): string =
   if n = 0 then out_string
@@ -79,22 +80,28 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
     if List.length block.comments > 0 then
      let next_block = List.hd_exn block.comments in
      acc @ [next_block.sequence]
-    else acc @ [-1]
+    else acc @ [5]
    | 1 -> 
     if List.length block.functions > 0 then
      let next_block = List.hd_exn block.functions in
      acc @ [next_block.sequence]
-    else acc @ [-1]
+    else acc @ [5]
    | _ -> 
     if List.length block.unknowns > 0 then
      let next_block = List.hd_exn block.unknowns in
      acc @ [next_block.sequence]
-    else acc @ [-1]
+    else acc @ [5]
    ) ~init:[] in
-  let max_val:int = List.fold_left first_sight ~init:(List.hd_exn first_sight) ~f:(fun acc x -> if x > acc then x else acc) in
-  if max_val = -1 then out_string
+   let _ = print_endline "now here" in
+  let _ = print_endline "now f here" in
+  let _ = print_endline (string_of_int (Unknown.min_index first_sight)) in
+  let _ = print_endline (string_of_int (List.length block.functions)) in
+  let _ = print_endline (string_of_int (List.length first_sight)) in
+  let m_index = Unknown.min_index first_sight in
+  let m_val = List.nth_exn first_sight m_index in
+  if m_val = 5 then out_string
   else
-   match Unknown.min_index first_sight with
+   match m_index with
    | 0 -> 
     let next_block = List.hd_exn block.comments in
     let next_block_string = Comment.get_content next_block in
