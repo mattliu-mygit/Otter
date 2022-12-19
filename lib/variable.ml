@@ -1,8 +1,7 @@
 open Core;;
 
 let variable_regexp = Str.regexp {| *let +[A-Za-z0-9_]+ =|};;
-let end_variable_regexp = Str.regexp {| *in|};;
-(* this is kind of annoying/wrong because in search_forward, it returns true for "string" pos:3 *)
+let end_variable_regexp = Str.regexp {|[ \n\r\t] *in[ \n\r\t]|};;
 
 let start_variable (line: string) =
   Str.string_match variable_regexp line 0 
@@ -20,14 +19,14 @@ let get_variable (file_string: string) : (variable * string) =
   let var_name = String.sub stripped_string ~pos:3 ~len:(equals_index - 3) |> String.strip in
   let remaining_string = String.sub stripped_string ~pos:(equals_index + 1) ~len:(String.length stripped_string - equals_index - 1) in
   let end_index = Str.search_forward end_variable_regexp remaining_string 0 in
-  let var_content = String.sub remaining_string ~pos:0 ~len:end_index in
-  let leftover = String.sub remaining_string ~pos:end_index ~len:(String.length remaining_string - end_index) in
+  let var_content = (String.sub remaining_string ~pos:0 ~len:end_index |> String.lstrip) ^ " in" in
+  let leftover_w_in = String.sub remaining_string ~pos:end_index ~len:(String.length remaining_string - end_index) |> String.lstrip in
+  let leftover = String.sub leftover_w_in ~pos:2 ~len:(String.length leftover_w_in - 2) |> String.lstrip in
   let var_block = {
     name = var_name;
     content = var_content;
   } in
   (var_block, leftover)
 
-  (* TODO: transfer "in" to be inside content of variable instead of leftover *)
   (* TODO: include return_types *)
 
