@@ -70,7 +70,7 @@ let wrap_columns (str: string) (width: int):string =
  let rec wrap_columns' (str: string) (width: int) (out_string: string):string =
   if String.length str <= width then out_string ^ str
   else
-   let last_in = try (Str.search_backward (Str.regexp "(in)[ \n\r\t]") str 0) with _ -> -1 in
+   let last_in = try ((Str.search_backward (Str.regexp "in[ \n\r\t]") str (String.length str))+2) with _ -> -1 in
    let last_space = try (Str.search_backward (Str.regexp " ") str width) with _ -> -1 in
    let last_sep = if not (phys_equal last_in (-1)) then last_in else last_space in
    match last_sep with

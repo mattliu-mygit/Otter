@@ -482,9 +482,13 @@ let test_bts_comments_only _ =
   sequence = 1}]; functions=[]; unknowns=[]
   } 2 80
 
+let test_wrap_columns _ = 
+ assert_equal "(*This is a comment*)\n(* This is another\ncomment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ")
+
 let raft_tests = "Raft Tests" >: test_list [
  "str_to_block comments only" >:: test_stb_comments_only;
  "block_to_str comments only" >:: test_bts_comments_only;
+ "wrap_columns" >:: test_wrap_columns;
 ]
 
 let series = "Otter Tests" >::: [
