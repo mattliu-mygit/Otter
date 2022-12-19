@@ -483,7 +483,8 @@ let test_bts_comments_only _ =
   } 2 80
 
 let test_wrap_columns _ = 
- assert_equal "(*This is a comment*)\n(* This is another\ncomment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ")
+ assert_equal "(*This is a comment*)\n(* This is another\ncomment *)" @@ Raft.wrap_columns "(*This is a comment*) (* This is another comment *)" (String.length "(*This is a comment*) ");
+ assert_equal "(*This is in\na comment*) (* This is\nanother comment *)" @@ Raft.wrap_columns "(*This is in a comment*) (* This is another comment *)" (String.length "(*This is in a comment*) ")
 
 let raft_tests = "Raft Tests" >: test_list [
  "str_to_block comments only" >:: test_stb_comments_only;
