@@ -37,4 +37,4 @@ val get_body: function_ -> (function_ * string)
 
 val get_closed_comment_index: string -> int -> int
 
-val to_string: function_ -> string * string
+val to_string: function_ -> int -> string * string
