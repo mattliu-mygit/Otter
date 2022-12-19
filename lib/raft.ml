@@ -17,19 +17,21 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
  let _ = print_endline "start" in
  if String.length str = 0 then acc
  else
- let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
+ (let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
   match x with
   | 0 -> 
-   (try (Str.search_forward Comment.regexp str 0)::acc with _ -> 5::acc)
+   (try acc @ [(Str.search_forward Comment.regexp str 0)] with _ -> acc @ [5])
   | 1 -> 
-   (try (Str.search_forward Function.regexp str 0)::acc with _ -> 5::acc)
-  | _ -> 0::acc
+   (try acc @ [(Str.search_forward Function.regexp str 0)] with _ -> acc @ [5])
+  | _ -> acc @ [5]
  ) ~init:[] in
  let _ = print_endline (string_of_int (Unknown.min_index first_sight)) in
  let _ = print_endline str in
  let m_index:int = Unknown.min_index first_sight in 
+ let _ = print_endline (string_of_int m_index) in
  let processed_index:int = if (List.nth_exn first_sight m_index) = 5 then 5 else
   m_index in
+  let _ = print_endline (string_of_int processed_index) in
  match processed_index with
  | 0 -> 
   let pos = try (search_forward Comment.regexp str 0) with _ -> 0 in
@@ -45,6 +47,7 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
       unknowns = acc.unknowns;
     }) (seq_num + 1)
  | 1 ->
+  let _ = print_endline ("Trying to get " ^ str) in
   let block, rest = Function.get_function str 0 seq_num in
   str_to_block rest ({
     comments = acc.comments;
@@ -52,12 +55,13 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
     unknowns = acc.unknowns;
   }) (seq_num + 1)
  | _ -> 
+  let _ = print_endline "here" in
   let block, rest = Unknown.get_unknown str seq_num first_sight in
   str_to_block rest ({
     comments = acc.comments;
     functions = acc.functions;
     unknowns = acc.unknowns @ [block];
-  }) (seq_num + 1)
+  }) (seq_num + 1))
 
  (* 
  check if there are any more blocks remaining in any value in the given block count
@@ -74,18 +78,18 @@ let block_to_str (block: block_count) (indent_size: int) (col_width:int) =
    | 0 -> 
     if List.length block.comments > 0 then
      let next_block = List.hd_exn block.comments in
-     next_block.sequence::acc
-    else -1::acc
+     acc @ [next_block.sequence]
+    else acc @ [-1]
    | 1 -> 
     if List.length block.functions > 0 then
      let next_block = List.hd_exn block.functions in
-     next_block.sequence::acc
-    else -1::acc
+     acc @ [next_block.sequence]
+    else acc @ [-1]
    | _ -> 
     if List.length block.unknowns > 0 then
      let next_block = List.hd_exn block.unknowns in
-     next_block.sequence::acc
-    else -1::acc
+     acc @ [next_block.sequence]
+    else acc @ [-1]
    ) ~init:[] in
   let max_val:int = List.fold_left first_sight ~init:(List.hd_exn first_sight) ~f:(fun acc x -> if x > acc then x else acc) in
   if max_val = -1 then out_string
