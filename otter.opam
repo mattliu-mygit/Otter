@@ -9,7 +9,6 @@ depends: [
   "dune" {>= "3.4"}
   "ounit2" {> "2.2"}
   "core" {> "0.15.0"}
-  "yojson" {> "2.0.2"}
   "odoc" {with-doc}
 ]
 build: [
