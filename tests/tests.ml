@@ -398,19 +398,19 @@ let test_function_regex _ =
   assert_equal false @@ Str.string_match function_regexp "let var1 = 4 + 5" 0
 
 let test_open_comment_regexp _ = 
-  assert_equal true @@ Str.string_match Otter_lib.Comment.regexp "(* This is a comment *)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.regexp "(* This is a comment (* with a nested comment *) *)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.regexp "   (* This is a comment *)" 0;
-  assert_equal false @@ Str.string_match Otter_lib.Comment.regexp "   This is a comment *)" 0;
-  assert_equal false @@ Str.string_match Otter_lib.Comment.regexp "   This is a comm(*ent *)" 0
+  assert_equal true @@ Str.string_match Comment.open_comment_regexp "(* This is a comment *)" 0;
+  assert_equal true @@ Str.string_match Comment.open_comment_regexp "(* This is a comment (* with a nested comment *) *)" 0;
+  assert_equal true @@ Str.string_match Comment.open_comment_regexp "   (* This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Comment.open_comment_regexp "   This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Comment.open_comment_regexp "   This is a comm(*ent *)" 0
 
 let test_close_comment_regexp _ = 
-  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "*)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp " *) *)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *)" 0;
-  assert_equal true @@ Str.string_match Otter_lib.Comment.end_comment_regexp "  *) asdfasdf" 0;
-  assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comment *)" 0;
-  assert_equal false @@ Str.string_match Otter_lib.Comment.end_comment_regexp "   This is a comme(*nt *)" 0
+  assert_equal true @@ Str.string_match Comment.end_comment_regexp "*)" 0;
+  assert_equal true @@ Str.string_match Comment.end_comment_regexp " *) *)" 0;
+  assert_equal true @@ Str.string_match Comment.end_comment_regexp "  *)" 0;
+  assert_equal true @@ Str.string_match Comment.end_comment_regexp "  *) asdfasdf" 0;
+  assert_equal false @@ Str.string_match Comment.end_comment_regexp "   This is a comment *)" 0;
+  assert_equal false @@ Str.string_match Comment.end_comment_regexp "   This is a comme(*nt *)" 0
 
 let variable_regexp = Str.regexp {| *let +[A-Za-z0-9]+ =|};;
 let test_variable_regex _ =
@@ -434,11 +434,12 @@ let regex_tests = "Regular Expression Tests" >: test_list [
     "Ident Start" >:: test_ident_start_regexp;
     "Ident End" >:: test_ident_end_regexp;
   ]
-
+let start_comment (line: string) =
+  Str.string_match Comment.open_comment_regexp line 0
 let test_start_comment _ = 
-  assert_equal true @@ Comment.start_comment "(* This is a comment *)";
-  assert_equal true @@ Comment.start_comment "    (* This is a comment *)";
-  assert_equal false @@ Comment.start_comment " asdf   (* This is a comment *)"
+  assert_equal true @@ start_comment "(* This is a comment *)";
+  assert_equal true @@ start_comment "    (* This is a comment *)";
+  assert_equal false @@ start_comment " asdf   (* This is a comment *)"
 
 let comment_1 = {Comment.content="(*This is a comment*)"; sequence=0}
 let comment_2 = {Comment.content="(*     This is a comment*)"; sequence=1}
@@ -462,14 +463,14 @@ let test_get_comment _ =
   assert_equal (comment_6, " asd(*f*)") @@ get_comment_6
 
 let test_get_sequence_num _ =
-  assert_equal 0 @@ Comment.get_sequence_num (fst get_comment_1);
-  assert_equal 1 @@ Comment.get_sequence_num (fst get_comment_2);
-  assert_equal 2 @@ Comment.get_sequence_num (fst get_comment_3)
+  assert_equal 0 @@ (fst get_comment_1).sequence;
+  assert_equal 1 @@ (fst get_comment_2).sequence;
+  assert_equal 2 @@ (fst get_comment_3).sequence
 
 let test_get_content _ =
-  assert_equal "(*This is a comment*)" @@ Comment.get_content (fst get_comment_1);
-  assert_equal comment_2.content @@ Comment.get_content (fst get_comment_2);
-  assert_equal comment_3.content @@ Comment.get_content (fst get_comment_3)
+  assert_equal "(*This is a comment*)" @@ (fst get_comment_1).content;
+  assert_equal comment_2.content @@ (fst get_comment_2).content;
+  assert_equal comment_3.content @@ (fst get_comment_3).content
 
 let comment_tests = "Comment Tests" >: test_list [
   "start_comment" >:: test_start_comment;
@@ -557,5 +558,6 @@ let series = "Otter Tests" >::: [
     unknown_tests;
     raft_tests;
   ]
+
 let () =
   run_test_tt_main series

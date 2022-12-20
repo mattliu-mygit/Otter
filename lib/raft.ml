@@ -1,41 +1,50 @@
 open Str;;
 open Core;;
 
-(* (* Find the end comment and concatenate substrings before and after the comment *) *)
-
 (*
-   We need to make types for both comment and unknown blocks, and then a generic block type that can be either of them.
+  This is a record lists of each block type.
 *)
-
 type block_count = {
  comments: Comment.comment list;
  functions: Function.function_ list;
  unknowns: Unknown.unknown list;
 }
 
+(*
+  This is a helper function that finds the index of the given value x in list lst.
+*)
 let rec find x lst =
  match lst with
  | [] -> raise (Failure "Not Found")
  | h :: t -> if x = h then 0 else 1 + find x t
 
+ (*
+  This is a helper function that finds the index of the smallest value in the given list.
+  If the list contains -1, then it returns 5.
+ *)
  let min_index (lst:int list):int = 
   let min_val = List.fold_left ~init:(List.hd_exn lst) ~f:(fun acc x -> if (x < acc && not (phys_equal x (-1))) || phys_equal acc (-1) then x else acc) lst in
   if phys_equal min_val (-1) then 5 else
   find min_val lst
 
+(*
+  Recursively turns a file content string str into a block_count record.
+  It does this by parsing string str block by block, adding the block into its respective block_count record field, and then calling itself again on the rest of the string.
+*)
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
   if String.length str = 0 then acc
-  else (let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
+  else (
+    let first_sight: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
     match x with
     | 0 -> 
-      (try acc @ [(Str.search_forward Comment.regexp str 0)] with _ -> acc @ [-1])
+      (try acc @ [(Str.search_forward Comment.open_comment_regexp str 0)] with _ -> acc @ [-1])
     | 1 -> 
       (try acc @ [(Str.search_forward Function.regexp str 0)] with _ -> acc @ [-1])
     | _ -> acc @ [-1]
   ) ~init:[] in
   match min_index first_sight with
   | 0 -> 
-    let pos = try (search_forward Comment.regexp str 0) with _ -> 0 in
+    let pos = try (search_forward Comment.open_comment_regexp str 0) with _ -> 0 in
     let offset_option = Str.string_after str pos |> String.lfindi ~f:(fun _ c -> not (Char.is_whitespace c) && not (phys_equal c '\n') && not (phys_equal c '\t') && not (phys_equal c '\r')) in
     let offset_amt = match offset_option with
       | Some i -> i
@@ -68,11 +77,16 @@ let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count
       unknowns = acc.unknowns @ [block];
     }) (seq_num + 1))
 
-
+(*
+  This is a helper function that generates a string of n whitespaces and appends it to the given string out_string.
+*)
 let rec gen_whitespaces (n:int) (out_string:string): string =
   if n = 0 then out_string
   else gen_whitespaces (n-1) (out_string ^ " ")
 
+(*
+  This function goes through string str and wraps lines longer than width characters. If there exists an "in" keyword in the line, then it will wrap the line at the in keyword. Otherwise, it will wrap the line at the last space character. If there exists no "in" or whitespace in the line, then it will not wrap the line.
+*)
 let wrap_columns (str: string) (width: int) (indent_level:int) (indent_size:int):string =
   let rec wrap_columns' (str: string) (out_string: string):string =
     if String.length str <= width then out_string ^ str
@@ -91,7 +105,7 @@ let wrap_columns (str: string) (width: int) (indent_level:int) (indent_size:int)
  (* 
  check if there are any more blocks remaining in any value in the given block count
  if there are, then process the block with the next smallest sequence number and add it to the out string
-  *)
+*)
 let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
   let rec block_to_string' (block: block_count) (out_string: string) (indent_level:int) =
     let sequences: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
@@ -118,7 +132,7 @@ let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
       match m_index with
       | 0 -> 
         let next_block = List.hd_exn block.comments in
-        let next_block_string = wrap_columns (Comment.get_content next_block)max_width indent_level indent_size in
+        let next_block_string = wrap_columns next_block.content max_width indent_level indent_size in
         block_to_string' {comments = List.tl_exn block.comments; functions = block.functions; unknowns = block.unknowns} ((gen_whitespaces (indent_level*indent_size) out_string) ^ next_block_string ^ "\n") indent_level
       | 1 ->
         let next_block = List.hd_exn block.functions in
@@ -134,11 +148,17 @@ let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
 ;;
 
 [@@@coverage off]
+(*
+  This function takes in a file name, creates, and writes the contents of out_string to the new created file.
+*)
 let output_file (file_name:string) (out_string:string): unit =
   let out_channel = Out_channel.create file_name in
   let _ = Out_channel.output_string out_channel out_string in
   Out_channel.close out_channel
   
+(*
+  Processes the command line arguments and returns a function that will write the output file.
+*)
 let process_args (indent_size:int option) (col_width:int option) (file_string:string): unit -> unit = 
   let indent_size = 
     match indent_size with
