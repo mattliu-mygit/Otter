@@ -1,9 +1,6 @@
 open Str;;
 open Core;;
 
-(*
-  This is a record lists of each block type.
-*)
 type block_count = {
  comments: Comment.comment list;
  functions: Function.function_ list;
@@ -27,10 +24,7 @@ let rec find x lst =
   if phys_equal min_val (-1) then 5 else
   find min_val lst
 
-(*
-  Recursively turns a file content string str into a block_count record.
-  It does this by parsing string str block by block, adding the block into its respective block_count record field, and then calling itself again on the rest of the string.
-*)
+
 let rec str_to_block (str: string) (acc: block_count) (seq_num:int): block_count =
   if String.length str = 0 then acc
   else (
@@ -84,9 +78,6 @@ let rec gen_whitespaces (n:int) (out_string:string): string =
   if n = 0 then out_string
   else gen_whitespaces (n-1) (out_string ^ " ")
 
-(*
-  This function goes through string str and wraps lines longer than width characters. If there exists an "in" keyword in the line, then it will wrap the line at the in keyword. Otherwise, it will wrap the line at the last space character. If there exists no "in" or whitespace in the line, then it will not wrap the line.
-*)
 let wrap_columns (str: string) (width: int) (indent_level:int) (indent_size:int):string =
   let rec wrap_columns' (str: string) (out_string: string):string =
     if String.length str <= width then out_string ^ str
@@ -102,10 +93,6 @@ let wrap_columns (str: string) (width: int) (indent_level:int) (indent_size:int)
         wrap_columns' second_part (out_string^ first_part ^ (gen_whitespaces ((indent_level+1) * indent_size) "\n")) in
   wrap_columns' str ""
 
- (* 
- check if there are any more blocks remaining in any value in the given block count
- if there are, then process the block with the next smallest sequence number and add it to the out string
-*)
 let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
   let rec block_to_string' (block: block_count) (out_string: string) (indent_level:int) =
     let sequences: int list = List.fold_left [0;1;2] ~f:(fun acc x -> 
@@ -149,16 +136,13 @@ let block_to_str (block: block_count) (indent_size: int) (max_width:int) =
 
 [@@@coverage off]
 (*
-  This function takes in a file name, creates, and writes the contents of out_string to the new created file.
+  This helper function takes in a file name, creates, and writes the contents of out_string to the new created file.
 *)
 let output_file (file_name:string) (out_string:string): unit =
   let out_channel = Out_channel.create file_name in
   let _ = Out_channel.output_string out_channel out_string in
   Out_channel.close out_channel
   
-(*
-  Processes the command line arguments and returns a function that will write the output file.
-*)
 let process_args (indent_size:int option) (col_width:int option) (file_string:string): unit -> unit = 
   let indent_size = 
     match indent_size with

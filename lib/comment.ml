@@ -2,14 +2,9 @@ open Core;;
 
 type comment = {content: string; sequence: int}
 
-(* Open and close comment regex *)
 let open_comment_regexp = Str.regexp "[\r\n\t ]*([*]";;
 let end_comment_regexp = Str.regexp "[\r\n\t ]*[*])";;
 
-(* 
-  Gets the next comment in a file content string.
-  str is the file content string, num_open is the number of open comments we're keeping track of, acc is the accumulated comment string, and seq_num is the sequence number of the comment block.
-*)
 let rec get_comment (str:string) (num_open: int) (acc:string) (seq_num:int): (comment*string) = 
   match num_open with
     | 0 -> ({content=acc; sequence=seq_num}, str)
