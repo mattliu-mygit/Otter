@@ -5,5 +5,14 @@ To use Otter, the user can provide a file that they want to format in the comman
 
 The user can run Otter in the following way, with optional flags.
 
-dune exec -- lib/otter.exe /file_path/file.ml
---indent-size 3 --column-width 20
+1. dune build
+2. dune exec -- lib/otter.exe [/file_path/file.ml] [flags]
+
+Flags
+- --indent-size: The number of spaces to indent each line of code. Default is 2.
+- --column-width: The maximum number of characters per line. Default is 80.
+
+Example call: dune exec -- lib/otter.exe /file_path/file.ml --indent-size 3 --column-width 20
+
+Testing:
+- dune test
